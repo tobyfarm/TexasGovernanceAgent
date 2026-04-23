@@ -31,9 +31,9 @@ The agenda posts closed session under a BLANKET citation: 'Pursuant to Texas Gov
 
 Under TOMA (TGC Chapter 551), a governmental body may conduct closed session ONLY under the specific exceptions listed in the statute. The presiding officer must publicly announce, on the record, the specific section(s) of TGC Chapter 551 that authorize the closed session (TGC §551.101). A certified agenda and audio recording must be maintained for at least 2 years (TGC §551.103). The board may NOT vote or take final action in closed session; all votes must occur after reconvening in open session (TGC §551.102).
 
-**WATCH:** The blanket citation (551.071-551.087) gives the board maximum flexibility but also means almost ANY topic could potentially be discussed in closed session. As a governance practice, the board president should specify which exceptions actually apply before entering. Watch for this.
+**WATCH:** The blanket citation (551.071-551.087) gives the board maximum flexibility but also means almost ANY topic could potentially be discussed in closed session.
 
-**RED FLAG:** TGC 551.074 (personnel) does NOT authorize discussing general employment policy, salary schedules, or working conditions. It covers SPECIFIC individuals by name/position only. If the discussion veers into general policy, it should be in open session.
+**RED FLAG:** TGC 551.074 (personnel) does NOT authorize discussing general employment policy, salary schedules, or working conditions.
 
 ## **Governance Questions**
 
@@ -69,11 +69,11 @@ Expenditures to Budget (p. 31):
 | **513/6 Debt Service** | $8,522,500 | $8,515,594 | **99.92%** |
 | **693/6 2023 Bond Fund** | $24,803,598 | $13,034,426 | 52.55% |
 
-**WATCH:** General Fund revenue at 71.65% realized with ~58% of the fiscal year elapsed (through March) looks healthy. Property tax collections are seasonal — most are received Oct–Jan. The remaining ~$7M in unrealized revenue will come primarily from state funding in the spring.
+**WATCH:** General Fund revenue at 71.65% realized with ~58% of the fiscal year elapsed (through March) looks healthy.
 
-**POSITIVE:** Debt Service revenue at 119.72% — the district has OVER-COLLECTED relative to budget ($8.68M collected vs. $7.25M budgeted). This suggests strong tax collections on the I&S side. However, expenditures are at 99.92% ($8.52M of $8.52M budget spent). The net current-year position in the Debt Service fund is roughly $164K positive.
+**POSITIVE:** Debt Service revenue at 119.72% — the district has OVER-COLLECTED relative to budget ($8.68M collected vs. $7.25M budgeted).
 
-**RED FLAG:** Debt Service at 99.92% expended means nearly all budgeted bond payments have been made for the year. Combined with the Samco estimate of $389,750 I&S Fund Balance for 2025/26, the debt service fund has minimal reserves heading into the refunding discussion.
+**RED FLAG:** Debt Service at 99.92% expended means nearly all budgeted bond payments have been made for the year.
 
 ## **Governance Questions**
 
@@ -99,9 +99,9 @@ This is the most important slide in the entire presentation. The growth era at B
 
 Lance Rainey's presentation explicitly identifies three key financial risks: (1) Enrollment flattening/declining — funded solely on ADA for M&O; (2) Legislative Uncertainty — HB2 funding could change; (3) Increased Fixed Costs — insurance, utilities, maintenance on the new building are unavoidable.
 
-**RED FLAG:** RADA has declined for TWO consecutive years (-13, then -1). Enrollment is down -3 this year. The district went from adding 237 RADA in 2021-22 to losing students. Since M&O funding is driven by ADA, this directly reduces state revenue. The 2023 bond and new multipurpose center were built for a growth trajectory that has stalled.
+**RED FLAG:** RADA has declined for TWO consecutive years (-13, then -1). Enrollment is down -3 this year.
 
-**RED FLAG:** The $1.18M in restricted salary funds is ALREADY COMMITTED. If HB2 changes or sunsets in the next legislative session, the district will have structural salary obligations without the revenue to cover them.
+**RED FLAG:** The $1.18M in restricted salary funds is ALREADY COMMITTED.
 
 ## **Governance Questions**
 
@@ -130,11 +130,11 @@ Lance Rainey's presentation explicitly identifies three key financial risks: (1)
 
 **TEC §45.004** specifically authorizes school districts to issue refunding bonds. Refunding bonds must be submitted to the Texas Attorney General for examination. **TGC Chapter 1207** provides the statewide framework: refunding bonds do NOT require a voter election, and maturity cannot exceed 40 years from issuance. **TGC Chapter 1371** allows the board to delegate pricing authority to a Pricing Officer within defined parameters — meaning the board will NOT see final pricing terms before execution. **TEC §§45.051–45.063** (PSF Guarantee Program) requires the district to comply with all PSF requirements including timely debt service payments; default allows the Comptroller to withhold state funds (TEC §45.061). **SEC Rule 15c2-12** requires the district to provide annual financial reports to the MSRB within 6 months of fiscal year end. Non-compliance is a securities law violation.
 
-**RED FLAG:** The hold harmless amount of $32.2M is massive. This represents the cumulative cost of keeping the I&S rate at $0.50 while extending debt. Hold Harmless is a legislative construct created by HB3 (2019) and modified by HB2 (2023). There is no constitutional guarantee. One-fifth of projected debt service depends on this payment stream continuing for 22 years.
+**RED FLAG:** The hold harmless amount of $32.2M is massive. This represents the cumulative cost of keeping the I&S rate at $0.50 while extending debt.
 
-**RED FLAG:** The I&S Fund Balance estimate of $389,750 for 2025/26 represents approximately 4% of annual debt service ($9.2M) — roughly 15 days of coverage. The fund has declined 80% in three years, and the refunding plan draws another $2.03M from it over the next four years. After that, the I&S fund balance is effectively zero.
+**RED FLAG:** The I&S Fund Balance estimate of $389,750 for 2025/26 represents approximately 4% of annual debt service ($9.2M) — roughly 15 days of coverage.
 
-**WATCH:** The parameter order (Section 3(c)) authorizes Capital Appreciation Bonds (CABs). CABs pay zero interest during the bond life and compound interest to maturity — total cost can be dramatically higher than current interest bonds. While there is no indication Samco plans to use CABs, the authorization exists. Ask whether CABs are contemplated and, if so, what the total compounded cost would be.
+**WATCH:** The parameter order (Section 3(c)) authorizes Capital Appreciation Bonds (CABs).
 
 ## **Governance Questions**
 
@@ -145,8 +145,6 @@ Lance Rainey's presentation explicitly identifies three key financial risks: (1)
 12. *The I&S fund balance has dropped 80% in 3 years ($1.94M to $389K) and the refunding draws another $2M from it. What is the minimum safe I&S fund balance, and when do we hit it?*
 
 13. *PCAD certified values arrive April 24. Will the board see this number before the Pricing Officer executes the refunding?*
-
-14. *The parameter order authorizes Capital Appreciation Bonds (Section 3(c)). Are CABs contemplated for this refunding? What would the total compounded cost be?*
 
 # **Item 11: School Bus Purchase — TERP Grant (pp. 137-166)**
 
@@ -167,19 +165,19 @@ The district is requesting approval to purchase two new 77-passenger propane-fue
 
 **TEC §44.031** (Competitive Bidding) sets a $20,000 threshold for school bus purchases specifically (§44.031(a)(5)); the Buy Board cooperative purchasing program (Contract 722-23) satisfies §44.031(a)(4) as an approved interlocal cooperative, exempting the district from the individual bid requirement. **Texas Health & Safety Code Ch. 390** authorizes TCEQ to administer the Texas Clean School Bus Program under the broader TERP. The TCSB contract requires 5 years of operation on regular daily routes, annual usage/mileage reporting to TCEQ, and destruction of the replaced buses per TCEQ specifications (3-inch hole in engine block or complete crushing). Failure to comply may require FULL return of grant funds ($205,751).
 
-**WATCH:** Blue Bird reserves the right to implement a tariff surcharge on bus sales dependent on tariffs on Mexican, Canadian, and/or Chinese imports. Rush also notes pricing is 'subject to adjustment at any time' for supply chain issues. The quote expires 5/1/2026 — board should act promptly.
+**WATCH:** Blue Bird reserves the right to implement a tariff surcharge on bus sales dependent on tariffs on Mexican, Canadian, and/or Chinese imports.
 
-**POSITIVE:** Grant covers 63% of total cost. Replacing 21–25 year old diesel buses with propane reduces emissions and maintenance costs. The old buses with 2000–2004 engines are well past recommended replacement age.
+**POSITIVE:** Grant covers 63% of total cost.
 
 ## **Governance Questions**
 
-15. *The quote expires May 1, 2026, and delivery is 180-250 days. If we approve tonight, what is the realistic delivery date?*
+14. *The quote expires May 1, 2026, and delivery is 180-250 days. If we approve tonight, what is the realistic delivery date?*
 
-16. *The tariff surcharge language is concerning. Has Rush provided any estimate of potential tariff impact? Could the price increase beyond the TERP grant + $119K?*
+15. *The tariff surcharge language is concerning. Has Rush provided any estimate of potential tariff impact? Could the price increase beyond the TERP grant + $119K?*
 
-17. *The TCSB contract requires 5 years of operation. What are the annual reporting requirements and who is responsible for compliance?*
+16. *The TCSB contract requires 5 years of operation. What are the annual reporting requirements and who is responsible for compliance?*
 
-18. *Is the $119K district cost budgeted for 2026-27, or does it need a separate budget amendment?*
+17. *Is the $119K district cost budgeted for 2026-27, or does it need a separate budget amendment?*
 
 
 *Remember: Under TOMA, all votes must occur in open session. Confirm closed session is properly posted and recorded.*

@@ -23,9 +23,12 @@ from _dummy_data import (  # noqa: E402  (deliberately after sys.path shim)
     SAMCO_LOQ_DUMMY,
 )
 from render import (  # noqa: E402
+    _DEFAULT_LIMITS,
     _SEVERITY_TO_RISK_LEVEL,
     _normalize_executive_summary_row,
     _normalize_meeting_metadata,
+    _strip_question_prefix,
+    _trim_legal_framework,
     render,
 )
 
@@ -185,3 +188,137 @@ def test_governance_questions_are_numbered_continuously_across_items() -> None:
     assert "\n5. *" in item_4c_block
     item_5_block = out.split("# **Item 5:")[1].split("# **Item")[0]
     assert "\n8. *" in item_5_block
+
+
+# ---------------------------------------------------------------------------
+# Compression: question prefix strip + caps + flag detail drop + LF trim.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("raw", "stripped"),
+    [
+        ("1. Will the board post the agenda?", "Will the board post the agenda?"),
+        ("  12.  Is quorum established?", "Is quorum established?"),
+        ("3) Short form prefix?", "Short form prefix?"),
+        ("No prefix at all.", "No prefix at all."),
+        ("2.3 Not a plain numeric prefix.", "2.3 Not a plain numeric prefix."),
+        ("", ""),
+    ],
+)
+def test_strip_question_prefix(raw: str, stripped: str) -> None:
+    assert _strip_question_prefix(raw) == stripped
+
+
+def test_no_double_numbering_when_questions_have_numeric_prefix() -> None:
+    data = deepcopy(BROCK_APRIL_13_DUMMY)
+    # Simulate Agent A emitting questions with their own `N. ` prefix.
+    data["items"][0]["questions"] = [
+        "1. Will the board state specific TGC sections?",
+        "2. Is the certified agenda maintained?",
+    ]
+    out = render(data)
+    # Template emits "1. *Will..." not "1. *1. Will..."
+    assert "\n1. *Will the board state specific TGC sections?*" in out
+    assert "\n1. *1." not in out
+
+
+def test_questions_cap_applied_from_default_limits() -> None:
+    data = deepcopy(BROCK_APRIL_13_DUMMY)
+    # 6 questions → should render 4 under default cap.
+    data["items"][0]["questions"] = [f"Question {i}?" for i in range(6)]
+    out = render(data)
+    item_block = out.split("# **Item K:")[1].split("# **Item")[0]
+    assert "*Question 0?*" in item_block
+    assert "*Question 3?*" in item_block
+    assert "*Question 4?*" not in item_block
+    assert "*Question 5?*" not in item_block
+
+
+def test_questions_cap_can_be_raised() -> None:
+    data = deepcopy(BROCK_APRIL_13_DUMMY)
+    data["items"][0]["questions"] = [f"Question {i}?" for i in range(6)]
+    out = render(data, limits={"max_questions_per_item": 10})
+    item_block = out.split("# **Item K:")[1].split("# **Item")[0]
+    assert "*Question 5?*" in item_block
+
+
+def test_flags_cap_applied_from_default_limits() -> None:
+    data = deepcopy(BROCK_APRIL_13_DUMMY)
+    # 8 WATCH flags → should render 6 under default cap.
+    data["items"][0]["flags"] = [
+        {"severity": "WATCH", "pattern_id": "x", "summary": f"Flag {i}.", "detail": "", "citations": []}
+        for i in range(8)
+    ]
+    out = render(data)
+    item_block = out.split("# **Item K:")[1].split("# **Item")[0]
+    assert "**WATCH:** Flag 0." in item_block
+    assert "**WATCH:** Flag 5." in item_block
+    assert "**WATCH:** Flag 6." not in item_block
+
+
+def test_flag_detail_is_dropped_by_default() -> None:
+    data = deepcopy(BROCK_APRIL_13_DUMMY)
+    data["items"][0]["flags"] = [
+        {
+            "severity": "WATCH",
+            "pattern_id": "x",
+            "summary": "One-liner summary.",
+            "detail": "Multi-sentence detail. Should not appear by default.",
+            "citations": [],
+        }
+    ]
+    out = render(data)
+    assert "**WATCH:** One-liner summary." in out
+    assert "Should not appear by default." not in out
+
+
+def test_flag_detail_can_be_included() -> None:
+    data = deepcopy(BROCK_APRIL_13_DUMMY)
+    data["items"][0]["flags"] = [
+        {
+            "severity": "WATCH",
+            "pattern_id": "x",
+            "summary": "Summary.",
+            "detail": "Verbose detail.",
+            "citations": [],
+        }
+    ]
+    out = render(data, limits={"include_flag_detail": True})
+    assert "**WATCH:** Summary. Verbose detail." in out
+
+
+def test_legal_framework_trim_skips_items_with_redflag() -> None:
+    item = {
+        "flags": [{"severity": "RED_FLAG"}],
+        "legal_framework": "P1.\n\nP2.\n\nP3.",
+    }
+    _trim_legal_framework(item, max_paragraphs=1)
+    assert item["legal_framework"] == "P1.\n\nP2.\n\nP3."  # unchanged
+
+
+def test_legal_framework_trim_applies_to_non_redflag_items() -> None:
+    item = {
+        "flags": [{"severity": "WATCH"}, {"severity": "POSITIVE"}],
+        "legal_framework": "P1 relevant.\n\nP2 also relevant.\n\nP3 boilerplate.",
+    }
+    _trim_legal_framework(item, max_paragraphs=1)
+    assert item["legal_framework"] == "P1 relevant."
+
+
+def test_legal_framework_trim_is_noop_when_cap_is_zero_or_none() -> None:
+    original = "P1.\n\nP2.\n\nP3."
+    for cap in (None, 0):
+        item = {"flags": [{"severity": "WATCH"}], "legal_framework": original}
+        _trim_legal_framework(item, max_paragraphs=cap)
+        assert item["legal_framework"] == original
+
+
+def test_default_limits_shape_is_stable() -> None:
+    # Locks in the public default contract — changes here should be deliberate.
+    assert _DEFAULT_LIMITS == {
+        "max_questions_per_item": 4,
+        "max_flags_per_item": 6,
+        "include_flag_detail": False,
+        "legal_framework_paragraphs_non_redflag": 1,
+    }

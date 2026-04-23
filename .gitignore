@@ -52,5 +52,10 @@ examples/*_output.md
 examples/*_output.docx
 *.local.md
 
+# Agent A pipeline artifacts — result.json is regeneratable from the Agent A
+# worktree (logs/runs/<run_id>/result.json) and is big (~500K+). Rendered
+# markdown comparisons are small and worth checking in for eval diffs.
+examples/agent_a_run_*/result.json
+
 # Worktrees — never track the dirs themselves, just the links git manages
 .git/worktrees/

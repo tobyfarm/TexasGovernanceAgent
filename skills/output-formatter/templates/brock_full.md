@@ -76,14 +76,14 @@ This report analyzes all {{ meeting_metadata.page_count }} pages of the {{ meeti
 
 {{ item.legal_framework }}
 {% endif %}
-{% for flag in item.flags %}
+{% for flag in item.flags[:_limits.max_flags_per_item] %}
 
-**{{ {'RED_FLAG': 'RED FLAG', 'WATCH': 'WATCH', 'POSITIVE': 'POSITIVE'}[flag.severity] }}:** {{ flag.summary }}{{ (' ' ~ flag.detail) if flag.detail else '' }}
+**{{ {'RED_FLAG': 'RED FLAG', 'WATCH': 'WATCH', 'POSITIVE': 'POSITIVE'}[flag.severity] }}:** {{ flag.summary }}{{ (' ' ~ flag.detail) if (_limits.include_flag_detail and flag.detail) else '' }}
 {% endfor %}
 {% if item.questions %}
 
 ## **Governance Questions**
-{% for q in item.questions %}
+{% for q in item.questions[:_limits.max_questions_per_item] %}
 {% set _qn.n = _qn.n + 1 %}
 
 {{ _qn.n }}. *{{ q }}*

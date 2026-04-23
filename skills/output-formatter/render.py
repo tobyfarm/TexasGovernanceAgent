@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from copy import deepcopy
 from pathlib import Path
@@ -61,6 +62,32 @@ _SEVERITY_TO_RISK_LEVEL: dict[str, str] = {
     "POSITIVE": "LOW",
     "NONE": "LOW",
 }
+
+# Compression budgets. The hand pre-read is tight and selective; live Agent A
+# output is ~2.7× longer. Enforce defaults here so the render stays close to
+# hand length even when upstream over-produces. All three can be overridden via
+# `render(..., limits=...)` or the `--limits-json` CLI flag if full fidelity is
+# needed (e.g. for a trustee who explicitly wants the unabridged version).
+_DEFAULT_LIMITS: dict[str, Any] = {
+    "max_questions_per_item": 4,
+    "max_flags_per_item": 6,
+    # Flag.detail is a 400–500 char paragraph that adds justification beyond
+    # the summary one-liner. The hand reference's flags are 1–2 sentences;
+    # rendering summary-only hits that target without truncating mid-sentence.
+    "include_flag_detail": False,
+    # On items with no RED_FLAG, trim legal_framework to the top N paragraphs.
+    # Agent A tends to produce 4–5 paragraphs of citations per item even when
+    # most of them are boilerplate ("no statute directly governs this type of
+    # item", quorum-math-when-all-present, etc.). Items with a RED_FLAG keep
+    # the full legal framework; items with only WATCH / POSITIVE flags trim.
+    # Set to 0 or None to disable.
+    "legal_framework_paragraphs_non_redflag": 1,
+}
+
+# Pattern for a leading "N." or "N) " the model sometimes embeds at the start
+# of a question string. The template adds its own continuous counter, so this
+# prefix causes double-numbering ("1. *1. Does the board...*") if not stripped.
+_QUESTION_PREFIX = re.compile(r"^\s*\d+\s*[\.\)]\s+")
 
 # Defaults filled in when meeting_metadata is sparse (Agent A currently emits
 # just {source, run_id}). Callers should override via metadata_overrides=...
@@ -145,10 +172,40 @@ def _items_by_id(items: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     return out
 
 
+def _strip_question_prefix(q: str) -> str:
+    """Remove a leading ``N.`` or ``N)`` numeric prefix the model sometimes inlines.
+
+    The template's continuous counter renders the number; a question body
+    that also starts with ``1.`` produces ``1. *1. Does the board…*``.
+    """
+    if not q:
+        return q
+    return _QUESTION_PREFIX.sub("", q, count=1)
+
+
+def _trim_legal_framework(item: dict[str, Any], max_paragraphs: int | None) -> None:
+    """In-place trim of legal_framework to the first N paragraphs when the item
+    has no RED_FLAG. Items with a RED_FLAG keep full legal framework — the
+    flag is serious enough that every cited authority matters."""
+    if not max_paragraphs:
+        return
+    lf = item.get("legal_framework") or ""
+    if not lf:
+        return
+    severities = {f.get("severity") for f in (item.get("flags") or [])}
+    if "RED_FLAG" in severities:
+        return
+    paragraphs = [p for p in lf.split("\n\n") if p.strip()]
+    if len(paragraphs) <= max_paragraphs:
+        return
+    item["legal_framework"] = "\n\n".join(paragraphs[:max_paragraphs])
+
+
 def _normalize(
     data: dict[str, Any],
     *,
     metadata_overrides: dict[str, Any] | None = None,
+    limits: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     normalized = deepcopy(data)
 
@@ -156,7 +213,14 @@ def _normalize(
         normalized.get("meeting_metadata"), metadata_overrides
     )
 
+    lf_cap = (limits or {}).get("legal_framework_paragraphs_non_redflag")
+
     items = normalized.get("items") or []
+    for it in items:
+        qs = it.get("questions") or []
+        it["questions"] = [_strip_question_prefix(q) for q in qs]
+        _trim_legal_framework(it, lf_cap)
+
     item_by_id = _items_by_id(items)
 
     rows = normalized.get("executive_summary_table") or []
@@ -187,10 +251,18 @@ def _env() -> Environment:
     )
 
 
+def _resolve_limits(overrides: dict[str, Any] | None) -> dict[str, Any]:
+    limits = dict(_DEFAULT_LIMITS)
+    if overrides:
+        limits.update({k: v for k, v in overrides.items() if v is not None})
+    return limits
+
+
 def render(
     analysis_result: Any,
     *,
     metadata_overrides: dict[str, Any] | None = None,
+    limits: dict[str, Any] | None = None,
 ) -> str:
     """Render an AnalysisResult (pydantic model or dict) to markdown.
 
@@ -198,14 +270,27 @@ def render(
     the analysis result's own metadata and the defaults. Use this to inject
     trustee_name, location, meeting_date, etc. when Agent A's pipeline
     doesn't have them — they're configuration, not analysis output.
+
+    `limits` controls compression budgets (see `_DEFAULT_LIMITS`):
+      - `max_questions_per_item` (int): cap governance questions per item.
+      - `max_flags_per_item` (int): cap flag callouts per item.
+      - `include_flag_detail` (bool): if False (default) render only
+        `Flag.summary`; if True also append `Flag.detail`. The hand pre-read
+        is tight; leaving this False keeps the render close to hand length.
     """
     data = _as_dict(analysis_result)
     mode = data.get("output_mode") or "BROCK_FULL"
     if mode not in _TEMPLATES:
         raise ValueError(f"Unknown output_mode: {mode!r}")
 
+    resolved_limits = _resolve_limits(limits)
+
     if mode == "BROCK_FULL":
-        data = _normalize(data, metadata_overrides=metadata_overrides)
+        data = _normalize(
+            data,
+            metadata_overrides=metadata_overrides,
+            limits=resolved_limits,
+        )
     else:
         # SAMCO_LOQ has a different shape (loq_target, timeline, etc.) —
         # only meeting_metadata needs normalization.
@@ -216,6 +301,8 @@ def render(
     if mode == "BROCK_FULL" and not data.get("items"):
         raise ValueError("BROCK_FULL render requires at least one item")
 
+    data["_limits"] = resolved_limits
+
     template = _env().get_template(_TEMPLATES[mode])
     return template.render(**data)
 
@@ -225,8 +312,13 @@ def render_to_file(
     out_path: Path,
     *,
     metadata_overrides: dict[str, Any] | None = None,
+    limits: dict[str, Any] | None = None,
 ) -> Path:
-    markdown = render(analysis_result, metadata_overrides=metadata_overrides)
+    markdown = render(
+        analysis_result,
+        metadata_overrides=metadata_overrides,
+        limits=limits,
+    )
     out_path.write_text(markdown)
     return out_path
 
@@ -255,6 +347,15 @@ def _cli(argv: list[str] | None = None) -> int:
         type=Path,
         help="Optional JSON file whose top-level object is merged into meeting_metadata.",
     )
+    parser.add_argument(
+        "--limits-json",
+        type=Path,
+        help=(
+            "Optional JSON file whose top-level object is passed as the `limits` "
+            "kwarg to render() (keys: max_questions_per_item, max_flags_per_item, "
+            "include_flag_detail). Defaults keep the render close to hand length."
+        ),
+    )
     args = parser.parse_args(argv)
 
     if args.from_json is None:
@@ -268,7 +369,11 @@ def _cli(argv: list[str] | None = None) -> int:
     if args.metadata_json:
         overrides = json.loads(args.metadata_json.read_text())
 
-    markdown = render(data, metadata_overrides=overrides)
+    limits: dict[str, Any] | None = None
+    if args.limits_json:
+        limits = json.loads(args.limits_json.read_text())
+
+    markdown = render(data, metadata_overrides=overrides, limits=limits)
     if args.out:
         args.out.write_text(markdown)
         print(f"wrote {args.out}  ({len(markdown):,} chars)", file=sys.stderr)

@@ -77,12 +77,16 @@ Read `skills/governance-principles/principles.md` §IV. Apply on every render:
 Match the hand version. Flags render as inline paragraphs with a bold prefix — **not** as blockquotes — because that is how the hand artifact renders and how it reads in Agent D's web view.
 
 ```markdown
-**WATCH:** One-line lede, then the explanatory body in the same paragraph. Keep it in body voice. End with a period.
+**WATCH:** One-liner lede in the Flag.summary field. 1–2 sentences maximum.
 
-**RED FLAG:** Lede, then body. Use sparingly — a doc full of red flags trains readers to ignore them.
+**RED FLAG:** Lede. Use sparingly — a doc full of red flags trains readers to ignore them.
 
-**POSITIVE:** Lede, then body. Positives should name the specific thing working so it can be studied and replicated.
+**POSITIVE:** Lede. Positives should name the specific thing working so it can be studied and replicated.
 ```
+
+By default the renderer emits **only `Flag.summary`** — the one-liner. `Flag.detail` (typically a 400–500 char paragraph of justification) is suppressed to keep each flag to 1–2 sentences, matching the hand reference's flag density. To include detail (for a verbose trustee-facing export or for debugging), pass `limits={"include_flag_detail": True}`.
+
+Flags are capped at `limits.max_flags_per_item` (default 6). Agent C should emit flags in priority order — the renderer keeps the top N in the emitted order, so the most important callouts survive compression.
 
 Severity mapping from `Flag.severity`:
 
@@ -109,6 +113,10 @@ Questions are numbered list items, italicized for emphasis. **Numbering runs con
 ```
 
 The template maintains a running counter across items. See `brock_full.md`.
+
+**Compression.** Questions are capped at `limits.max_questions_per_item` (default 4). Agent C should emit the most important questions first — the renderer keeps the top N. When Agent C emits more than the cap, the continuous counter advances only by the number actually rendered.
+
+**Numeric-prefix stripping.** The adapter strips leading `N.` or `N)` from question strings (e.g. `"1. Will the board…"` → `"Will the board…"`) so the template's continuous counter doesn't produce double-numbered output like `1. *1. Will the board…*`. This handles the case where the model has already numbered its own output.
 
 ---
 
@@ -207,6 +215,39 @@ uv run python skills/output-formatter/render.py \
 ```
 
 `--metadata-json` is optional; its top-level object is merged into `meeting_metadata` (overrides win over both the analysis result's own metadata and the built-in defaults).
+
+### Compression limits
+
+The hand pre-read is tight and selective; live Agent A output runs ~2.7× longer before compression. The renderer enforces defaults that bring each rendered item in line with hand-length averages. Pass `limits={...}` to override:
+
+```python
+markdown = render(
+    result,
+    limits={
+        "max_questions_per_item": 4,        # default 4  (cap questions displayed per item)
+        "max_flags_per_item": 6,             # default 6  (cap flag callouts displayed per item)
+        "include_flag_detail": False,        # default False (drop Flag.detail; summary only)
+        "legal_framework_paragraphs_non_redflag": 1,
+        # default 1  (on items without a RED_FLAG, trim legal_framework to the
+        # top N paragraphs — the tail is usually boilerplate; set to None or 0
+        # to disable)
+    },
+)
+```
+
+**Measured impact on a live Agent A 28-item run:**
+- Baseline render (no compression): 211K chars
+- Default compression: 126K chars — 40.5% reduction
+- Per-item average: 4,486 chars (hand reference averages 5,923/item on 13 items)
+
+The remaining delta vs. the hand reference (126K vs. 77K) is driven by item count (Agent A's parser emits 28 items including ceremonial ones like CALL TO ORDER, INVOCATION, ADJOURN — the hand version skips these entirely). The renderer cannot address that without dropping items.
+
+CLI: pass a JSON file via `--limits-json path/to/limits.json`.
+
+**When to override the defaults:**
+- Trustee wants the unabridged render → `limits={"include_flag_detail": True, "legal_framework_paragraphs_non_redflag": None}`.
+- A single substantive item's flag list was truncated → raise `max_flags_per_item` for that render.
+- Emergency compression needed (e.g. SMS preview) → lower caps further, e.g. `max_questions_per_item=2`.
 
 ### Metadata overrides
 
