@@ -32,20 +32,25 @@ def test_split_sections_finds_all_top_level_sections():
     assert sections["IV"].startswith("## IV. Voice and tone notes")
 
 
-def test_doctrine_block_includes_both_I_and_IV():
+def test_doctrine_block_includes_I_III_and_IV():
     block = build_doctrine_block(PRINCIPLES_PATH)
     assert "## I. Core governance principles" in block.text
+    assert "## III. Citation register" in block.text
     assert "## IV. Voice and tone notes" in block.text
+    # §III contains the TEC section numbers trustees ask about directly.
+    assert "§11.151" in block.text
     assert "BLOCK 3 OF 3" in block.label
 
 
-def test_doctrine_block_preserves_IV_when_I_is_truncated():
+def test_doctrine_block_preserves_III_and_IV_when_I_is_truncated():
     # Build a fake principles file where §I is enormous so the loader is
-    # forced to truncate §I while preserving §IV in full.
+    # forced to truncate §I while preserving §III and §IV in full.
     big = "x" * (BUDGET_DOCTRINE_CHARS * 2)
     fake = (
         "# Fake principles\n\n"
         f"## I. Big\n\n{big}\n\n"
+        "## III. Citation register\n\n"
+        "TEC §11.151 — trustee governance authority.\n\n"
         "## IV. Voice and tone notes\n\n"
         "The voice rules live here. Quote adopted text verbatim.\n"
     )
@@ -56,8 +61,10 @@ def test_doctrine_block_preserves_IV_when_I_is_truncated():
     finally:
         tmp.unlink(missing_ok=True)
 
-    # §IV must be intact even though §I overflowed the budget.
+    # §III and §IV must be intact even though §I overflowed the budget.
+    assert "TEC §11.151 — trustee governance authority." in block.text
     assert "The voice rules live here. Quote adopted text verbatim." in block.text
+    assert "## III. Citation register" in block.text
     assert "## IV. Voice and tone notes" in block.text
     # §I should show a truncation marker.
     assert "truncated" in block.text

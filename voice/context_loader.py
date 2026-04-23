@@ -155,24 +155,31 @@ def _split_sections(source: str) -> dict[str, str]:
 
 
 def build_doctrine_block(principles_path: Path = PRINCIPLES_PATH) -> ContextBlock:
-    """Build the §I + §IV excerpt, preserving §IV in full.
+    """Build the §I + §III + §IV excerpt, preserving §III and §IV in full.
 
     §IV (voice and tone notes) is the voice guardrail and must not be
-    truncated — it's tiny. §I is the full principles catalog and may be
+    truncated — it's tiny. §III (citation register — TEC / TGC / TAC
+    section numbers the doctrine relies on) is small and high-value for
+    grounding trustee questions like "what does TEC §11.151 say?" so we
+    preserve it in full too. §I is the principles catalog and may be
     truncated tail-first when the combined excerpt exceeds the budget.
     """
     if not principles_path.exists():
         raise FileNotFoundError(f"principles file not found: {principles_path}")
     sections = _split_sections(principles_path.read_text(encoding="utf-8"))
     part_iv = sections.get("IV", "")
+    part_iii = sections.get("III", "")
     part_i = sections.get("I", "")
 
-    remaining = max(BUDGET_DOCTRINE_CHARS - len(part_iv), 0)
+    remaining = max(
+        BUDGET_DOCTRINE_CHARS - len(part_iv) - len(part_iii),
+        0,
+    )
     part_i = _truncate(part_i, remaining, "doctrine §I")
-    excerpt = f"{part_i}\n\n{part_iv}".strip()
+    excerpt = "\n\n".join(x for x in (part_i, part_iii, part_iv) if x).strip()
 
     return ContextBlock(
-        label="BLOCK 3 OF 3: DOCTRINE EXCERPT (principles.md §I + §IV)",
+        label="BLOCK 3 OF 3: DOCTRINE EXCERPT (principles.md §I + §III + §IV)",
         text=excerpt,
     )
 
