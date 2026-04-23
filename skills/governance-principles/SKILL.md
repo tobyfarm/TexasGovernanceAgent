@@ -9,6 +9,27 @@ description: Use this skill whenever analyzing a Texas public school board agend
 
 ---
 
+## Calibration discipline — read this first
+
+A sitting-trustee pre-read of a 166-page board book with 11 agenda items produces roughly **3–4 flags per item** across both the governance-principles and risk-flagger Skills combined. Most routine items produce **zero** principle-level flags. This Skill must match that restraint.
+
+**Every principle emission must clear three bars:**
+
+1. **Triggered by direct evidence.** A principle fires when there is specific text in the packet that instantiates the detection signal. Walking the sixteen principles "in order and asking whether this applies" produces over-firing. Instead, walk them asking "is there a specific sentence in the packet that triggers this?" If you cannot quote the trigger, do not fire.
+2. **Not blocked by a suppressor.** The global suppressors below apply to every principle. Also honor the per-principle hedging rules where present.
+3. **Materially governance-relevant.** If the principle technically fires but the resulting flag would be boilerplate or about a ministerial detail that does not affect governance, do not emit.
+
+**Global suppressors (apply to every P_xx emission):**
+
+- **Informational context only.** The item is a presentation, briefing, or monitoring report with no action/decision, AND the principle's concern would only be actionable at adoption time. (Especially relevant for P01, P05, P08, P09, P10, P16.)
+- **Routine workshop cadence.** The item is part of a known, calendared workshop series (Budget Workshop #1 of 3; Priority-1 MOY Scorecard Update) and the timing is expected, not improvised. Deferral-type principles (P05, P07) should not fire when the "deferral" is the next scheduled workshop date.
+- **Renewal of a previously-approved framework.** The item is a renewal of a standing authority, interlocal, or program (not a new commitment). P11 specificity concerns may still apply to the renewal itself, but fresh-commitment principles should not fire.
+- **Descriptive citation, not controlling.** TASB, LSG, Team of 8, or similar training frameworks are cited as context, best practice, or alongside the controlling text. P01 fires only when the training is invoked AS controlling authority against adopted policy.
+
+**Silence is the default.** Walking sixteen principles on every item will tempt emissions on every "this kind of applies" match. Resist. The hand-version trustee walks an item and produces zero, one, or two principle-level flags on most items, not six or eight.
+
+---
+
 ## Load order for every analysis pass
 
 1. Read `skills/governance-principles/principles.md` in full. It is authoritative and versioned; re-read it on each invocation so any update to the doctrine takes effect immediately.
@@ -19,9 +40,11 @@ description: Use this skill whenever analyzing a Texas public school board agend
 
 ## Per-principle detection index
 
-For each item, walk the sixteen principles below in order. The signals listed are the canonical trigger patterns. When a signal fires, emit a flag in the output shape defined later in this file. A single item can trigger multiple principles; do not suppress duplicates — Agent F deduplicates at render.
+For each item, scan the sixteen principles below looking for specific, direct triggers — not category resemblances. A trigger requires a quotable sentence in the packet that instantiates the signal. Most items will trigger zero to two principles; items that appear to trigger four or more usually have a lot of false matches.
 
 The canonical text of each principle, its "why it matters," and its full canonical quote block all live in `principles.md` §I. Do not paraphrase them into output; cite the principle ID and let the formatter pull the quote.
+
+**Reading the "Triggers when any of:" lists below.** Each bullet is a specific signal — not a category. "TASB guidance as controlling authority" means the item uses TASB to override adopted policy, not merely mentions TASB. "Goals without measures" means a goal adoption vote lacks the six structured elements, not that a monitoring report discusses progress without repeating every measure. Apply the global suppressors above before emitting; if the item is informational, a routine workshop, or a renewal, many principle triggers are suppressed.
 
 ### P01 — Policy controls over procedure
 **Triggers when any of:**
