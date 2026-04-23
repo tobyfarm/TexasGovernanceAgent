@@ -62,6 +62,15 @@ _ITEM_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 # not the agenda — skip it.
 _AGENDA_HEAD_FRACTION = 0.2
 
+# Within a letter-parent's TOC span, numbered sub-items like:
+#   1. Approve Minutes
+#   2. 2026-2027 Budget Workshop #1
+# Title has substantive content (letter or digit leader).
+_SUBITEM_RE = re.compile(
+    r"^\s*(?P<num>\d{1,2})\.\s+(?P<title>[A-Za-z0-9].{4,300}?)\s*$",
+    re.MULTILINE,
+)
+
 _TYPE_KEYWORDS: list[tuple[ItemType, tuple[str, ...]]] = [
     ("CLOSED_SESSION", ("closed session", "executive session", "§551.071", "§551.072", "§551.074")),
     ("CONSENT", ("consent agenda", "consent item")),
@@ -166,7 +175,65 @@ def _find_boundaries(pages: list[str]) -> list[tuple[str, str, int, int]]:
     logger.info("matched %d agenda boundaries using pattern=%s", len(best), best_name)
 
     toc_end_page = _infer_toc_end(pages, best)
-    return _assign_body_ranges(pages, best, toc_end_page)
+    # Character offset where the TOC ends — only look for sub-items before this.
+    toc_cutoff = sum(len(p) + 1 for p in pages[:toc_end_page])
+    full_text = "\n".join(pages)
+    expanded = _expand_with_subitems(
+        full_text, best, pattern_name=best_name, toc_cutoff=toc_cutoff
+    )
+    if expanded != best:
+        logger.info(
+            "expanded TOC to %d items (parents + sub-items) from %d letters",
+            len(expanded),
+            len(best),
+        )
+    return _assign_body_ranges(pages, expanded, toc_end_page)
+
+
+def _expand_with_subitems(
+    full_text: str,
+    toc_entries: list[tuple[str, str, int]],
+    *,
+    pattern_name: str,
+    toc_cutoff: int,
+) -> list[tuple[str, str, int]]:
+    """For each letter-parent TOC entry, look inside its TOC span for numbered
+    sub-items (1., 2., 3., ...) and emit them as separate entries with IDs
+    like "G.1". Letters without sub-items stay as-is.
+
+    Sub-item search is bounded to `toc_cutoff` so body-content numbered lists
+    (contract clauses, bond disclosure items, bus specs) don't get picked up
+    as pseudo-agenda sub-items. Only applies to letter-family patterns."""
+    if pattern_name not in ("letter_dot", "numbered_letter"):
+        return toc_entries
+
+    out: list[tuple[str, str, int]] = []
+    for i, (parent_id, parent_title, parent_off) in enumerate(toc_entries):
+        # The span for this parent is limited to the TOC: stop at the next
+        # parent's offset, or at the TOC cutoff — whichever comes first.
+        next_parent_off = toc_entries[i + 1][2] if i + 1 < len(toc_entries) else toc_cutoff
+        span_end = min(next_parent_off, toc_cutoff)
+        if span_end <= parent_off:
+            out.append((parent_id, parent_title, parent_off))
+            continue
+        span = full_text[parent_off:span_end]
+
+        sub_matches: list[tuple[str, str, int]] = []
+        for m in _SUBITEM_RE.finditer(span):
+            title = m.group("title").strip()
+            if len(title) < _MIN_TITLE_CHARS:
+                continue
+            if m.start() == 0:
+                continue
+            sub_id = f"{parent_id}.{m.group('num')}"
+            sub_off = parent_off + m.start()
+            sub_matches.append((sub_id, title, sub_off))
+        if sub_matches:
+            out.append((parent_id, parent_title, parent_off))
+            out.extend(sub_matches)
+        else:
+            out.append((parent_id, parent_title, parent_off))
+    return out
 
 
 def _infer_toc_end(pages: list[str], toc_entries: list[tuple[str, str, int]]) -> int:
@@ -184,6 +251,12 @@ def _infer_toc_end(pages: list[str], toc_entries: list[tuple[str, str, int]]) ->
     return last_page
 
 
+# The last item's range would otherwise extend to end of document. Most
+# board-books close with a procedural one-liner (ADJOURN) that has no
+# substantive body, so cap the tail to avoid swallowing unrelated tail pages.
+_LAST_ITEM_MAX_PAGES = 3
+
+
 def _assign_body_ranges(
     pages: list[str],
     toc_entries: list[tuple[str, str, int]],
@@ -192,17 +265,19 @@ def _assign_body_ranges(
     """For each TOC item, locate where its body content begins in pages after
     the TOC and return page ranges that span to the next item's body start.
 
-    When an item's body can't be located (line-wrapped titles, missing body,
-    etc.) the item is placed sequentially between the previous and next
-    located items so nothing collapses back to page 1."""
+    Items whose body can't be located (line-wrapped titles, paraphrased body
+    headers) get placed sequentially between matched neighbors. Unmatched
+    items still claim the natural gap between neighbors because a failed
+    title match is often a formatting difference (e.g., "Series 2016 and
+    Series 2017 Bond Refunding/Restructure" → body has spaces around the
+    slash) rather than a missing body. The LAST item gets capped because
+    TASB board-books close with a procedural ADJOURN that has no body."""
     body_search_start = toc_end_page + 1
     body_starts: list[int | None] = [
         _find_body_start(pages, title, from_page=body_search_start)
         for _, title, _ in toc_entries
     ]
 
-    # Fill gaps: if item i has no body start, interpolate between the nearest
-    # neighbor matches on either side.
     resolved = list(body_starts)
     for i, start in enumerate(resolved):
         if start is not None:
@@ -216,7 +291,6 @@ def _assign_body_ranges(
         elif nxt is not None:
             resolved[i] = max(nxt - 1, body_search_start)
         else:
-            # Nothing located at all — fall back to the body start.
             resolved[i] = body_search_start
 
     boundaries: list[tuple[str, str, int, int]] = []
@@ -227,7 +301,7 @@ def _assign_body_ranges(
             nxt_start = resolved[i + 1] or len(pages)
             end = max(start, nxt_start - 1)
         else:
-            end = len(pages)
+            end = min(len(pages), start + _LAST_ITEM_MAX_PAGES - 1)
         boundaries.append((item_id, title, start, end))
     return boundaries
 
