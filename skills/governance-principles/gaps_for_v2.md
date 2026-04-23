@@ -4,6 +4,8 @@
 
 **How this file is used.** Every item below names (a) what the hand version flags, (b) why the current taxonomy cannot catch it, and (c) a proposed signal addition. When Toby agrees on a v2 bump, the doctrine is edited; then the Skill SKILL.md files are updated to reference the new principle or pattern by ID.
 
+**Format note.** The "Fires on / Default severity / Disqualifier" shape below is the original v2 proposal language. When each proposal is accepted and encoded into SKILL.md, it will be rewritten in the tighter **Required evidence (all must be present)** + **Suppressors** + **materiality threshold** format introduced in the 2026-04-23 risk-flagger restraint pass (commits `4308020` and `f9e49a4`). The intent is that each v2 pattern, once live, fires with the same restraint as RF_01–RF_20 after tightening — never on category resemblance, always on specific quotable evidence.
+
 ---
 
 ## Top 5 gaps, ranked by frequency in the April 13 hand version
