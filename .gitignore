@@ -41,7 +41,8 @@ pnpm-debug.log*
 .idea/
 *.swp
 *.swo
-.claude/
+.claude/*
+!.claude/skills
 
 # OS
 .DS_Store

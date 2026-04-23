@@ -1,0 +1,37 @@
+[project]
+name = "brock-governance-agent"
+version = "0.1.0"
+description = "Texas school-board packet analysis agent — turns dense board books into trustee-ready pre-reads grounded in statute and governance doctrine."
+requires-python = ">=3.11"
+dependencies = [
+    "claude-agent-sdk>=0.1.0",
+    "anthropic>=0.40.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-multipart>=0.0.12",
+    "pypdf>=5.0.0",
+    "pdfplumber>=0.11.0",
+    "pydantic>=2.9.0",
+    "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "httpx>=0.27.0",
+    "ruff>=0.7.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
