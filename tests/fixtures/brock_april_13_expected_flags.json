@@ -1,0 +1,435 @@
+{
+  "_meta": {
+    "source_pdf": "examples/brock_april_13_2026.pdf",
+    "hand_reference": "examples/brock_april_13_2026_prereadhand.md",
+    "doctrine_version": "principles.md v1 (2026-04-23)",
+    "skill_calibration": "post-2026-04-22 side-by-side (RF_02 softening, RF_18 prospective mode, RF_19 wrong-direction override, closed-session question template, 12-question cap on major items)",
+    "notes": "Expected flag sets derived from the hand-written trustee pre-read. Ground truth for Agent A's pipeline validation and Agent F's renderer. Flag IDs align with principles.md §I (P01–P16) and §II (RF_01–RF_20, PF_A–PF_E). Items with no flags listed should emit none.",
+    "known_gaps": "Flags the hand version emits that cannot be generated under current taxonomy are listed in skills/governance-principles/gaps_for_v2.md and tagged here as 'blocked_on': 'v2'."
+  },
+  "items": [
+    {
+      "item_id": "K",
+      "title": "Closed Session",
+      "item_type": "CLOSED_SESSION",
+      "expected_flags": [
+        {
+          "pattern_id": "RF_01",
+          "severity": "WATCH",
+          "summary": "Closed-session posted under blanket §§551.071–551.087 range — presiding officer should state specifics on the record before entering.",
+          "citations": ["TGC §551.101", "TGC §551.102"],
+          "cross_fires_with": ["P04", "P11"]
+        },
+        {
+          "pattern_id": "P11",
+          "severity": "WATCH",
+          "summary": "Closed-session posted under the full §551.071–§551.087 range without specifying which subsections actually apply tonight.",
+          "citations": ["TGC §551.101"],
+          "cross_fires_with": ["RF_01"]
+        },
+        {
+          "pattern_id": "RF_18",
+          "severity": "WATCH",
+          "summary": "§551.074 covers specific individuals by name/position only; if discussion veers into general employment policy, it must return to open session.",
+          "citations": ["TGC §551.074", "TGC §551.102"],
+          "cross_fires_with": ["P04"],
+          "_mode": "prospective-reminder"
+        }
+      ],
+      "expected_questions": [
+        "Will the board president state the SPECIFIC TGC sections (not just the blanket range) before entering closed session?",
+        "Is the certified agenda and audio recording being maintained as required by TGC §551.103?",
+        "Which specific exceptions are anticipated tonight — personnel (§551.074) related to the teacher contracts? Real property (§551.072)? Litigation (§551.071)?",
+        "If the closed session involves personnel evaluations, have the affected employees been notified of their right to request a public hearing under TGC §551.074(b)?"
+      ]
+    },
+    {
+      "item_id": "4A",
+      "title": "March 9, 2026 Minutes",
+      "item_type": "CONSENT",
+      "expected_flags": [],
+      "expected_questions": [
+        "Were all motions and vote records accurately captured?",
+        "Were any items discussed in March that require follow-up tonight?"
+      ]
+    },
+    {
+      "item_id": "4B",
+      "title": "Check Register",
+      "item_type": "CONSENT",
+      "expected_flags": [],
+      "expected_questions": [
+        "Are there any unusually large single-vendor payments that warrant explanation?",
+        "What is the current Reeder Construction draw against the 2023 bond fund?"
+      ]
+    },
+    {
+      "item_id": "4C",
+      "title": "Revenue & Expenditure Reports",
+      "item_type": "CONSENT",
+      "expected_flags": [
+        {
+          "pattern_id": "PF_C",
+          "severity": "POSITIVE",
+          "summary": "Debt Service revenue at 119.72% of budget — district over-collected I&S levy this cycle.",
+          "citations": [],
+          "_extends": "PF_C revenue sub-type; see gaps_for_v2.md item on extending PF_C to revenue bright spots"
+        },
+        {
+          "pattern_id": "RF_20",
+          "severity": "RED_FLAG",
+          "summary": "I&S Fund Balance estimated at $389,750 against $9.2M annual debt service — roughly 15 days of coverage, and trajectory is an 80% decline over three years.",
+          "citations": ["TEC §44.002", "TEC §44.006"],
+          "_override_reason": "Multi-year decline trajectory triggers RED_FLAG escalation; see gaps_for_v2.md item 2 for v2 trajectory signal",
+          "blocked_on": "v2"
+        }
+      ],
+      "expected_questions": [
+        "With Debt Service at 99.92% expended, what is the current I&S fund balance? The Samco report shows $794,653 for 2024/25 — is that still accurate?",
+        "General Fund expenditures at 67.7% including encumbrances — are we tracking to end the year within budget?",
+        "What is the projected General Fund balance at year-end?"
+      ]
+    },
+    {
+      "item_id": "4D",
+      "title": "Region 11 Interlocal Agreement",
+      "item_type": "CONSENT",
+      "expected_flags": [
+        {
+          "pattern_id": "PF_B",
+          "severity": "POSITIVE",
+          "summary": "Routine Region 11 renewal — standard governance action; contract terms match services Brock uses.",
+          "citations": ["TGC §791.011", "TGC §791.025"]
+        }
+      ],
+      "expected_questions": []
+    },
+    {
+      "item_id": "4E",
+      "title": "Multipurpose Student Center Update",
+      "item_type": "INFORMATIONAL",
+      "expected_flags": [],
+      "expected_questions": [
+        "What is the current projected completion date and is it on schedule?",
+        "Are there any change orders or cost overruns beyond the original contract?",
+        "When does the $61K additional property insurance kick in?"
+      ]
+    },
+    {
+      "item_id": "5",
+      "title": "Budget Workshop #1",
+      "item_type": "DISCUSSION",
+      "expected_flags": [
+        {
+          "pattern_id": "RF_23",
+          "severity": "RED_FLAG",
+          "summary": "RADA declined two consecutive years (-13, -1); since M&O funding is ADA-driven, this is direct revenue loss with no buffer.",
+          "citations": ["TEC §42", "TEC §11.1511"],
+          "blocked_on": "v2",
+          "_note": "Pattern proposed in gaps_for_v2.md item 3 (enrollment decline vs ADA funding)"
+        },
+        {
+          "pattern_id": "RF_15",
+          "severity": "RED_FLAG",
+          "summary": "Recapture payment mentioned as a budget increase with no estimate provided — for a $1.409B taxable-value district this could be seven-figure.",
+          "citations": ["TEC §44.002", "TEC §44.004"]
+        },
+        {
+          "pattern_id": "RF_21",
+          "severity": "RED_FLAG",
+          "summary": "$1.18M in HB2 restricted allotments already committed to salary — if the next legislative session modifies HB2, the district has structural salary obligations without matching revenue.",
+          "citations": ["TEC §42", "TEC §44.002"],
+          "blocked_on": "v2",
+          "_note": "Pattern proposed in gaps_for_v2.md item 1 (state legislative funding dependency)"
+        },
+        {
+          "pattern_id": "PF_C",
+          "severity": "POSITIVE",
+          "summary": "CTE revenue tripled from $963K (2016) to $2.94M (projected 2025/26); FTEs more than doubled.",
+          "citations": [],
+          "_extends": "PF_C revenue sub-type"
+        },
+        {
+          "pattern_id": "RF_22",
+          "severity": "RED_FLAG",
+          "summary": "Expenditures tracking close to revenue; I&S Fund Balance declining; volatility in General Fund with thin reserves.",
+          "citations": ["TEC §44.002"],
+          "blocked_on": "v2",
+          "_note": "Pattern proposed in gaps_for_v2.md item 2 (multi-year decline trajectory)"
+        },
+        {
+          "pattern_id": "RF_26",
+          "severity": "RED_FLAG",
+          "summary": "CFO identifies three key risks (enrollment, legislative uncertainty, fixed-cost growth) without presenting mitigation options.",
+          "citations": ["TEC §11.1515"],
+          "blocked_on": "v2",
+          "_note": "Secondary gap in gaps_for_v2.md — risks identified without mitigation plan"
+        }
+      ],
+      "expected_questions_min": 10,
+      "expected_questions_max": 12,
+      "expected_question_themes": [
+        "demographic projection / Parker County housing starts",
+        "PCAD certified estimates pre-briefing",
+        "recapture payment estimate",
+        "TASB salary study status — new or prior-year",
+        "HB2 restricted allotment contingency plan",
+        "General Fund and I&S target fund balances",
+        "80/10/10 expenditure target current state",
+        "CTE programs driving revenue, 55% spend requirement",
+        "Parker County Special Ed Co-Op restructure risk",
+        "structural deficit vs one-time revenue",
+        "total ongoing operational cost of the multipurpose building",
+        "Fast Growth Allotment loss effect on long-term projections"
+      ]
+    },
+    {
+      "item_id": "6",
+      "title": "Balanced Scorecard — Priority 1 Secondary",
+      "item_type": "DISCUSSION",
+      "expected_flags": [
+        {
+          "pattern_id": "RF_19",
+          "severity": "RED_FLAG",
+          "summary": "BHS Algebra I Predicted Growth dropped 19 points (81 → 62) MOY, 23 points below the 85 annual goal — wrong-direction trajectory with ~6 weeks to STAAR.",
+          "citations": ["TEC §11.1515", "TEC §11.251"],
+          "cross_fires_with": ["P08", "P09"],
+          "_override_applied": "wrong-direction + gap-to-goal ≥15 pts → RED_FLAG"
+        },
+        {
+          "pattern_id": "PF_C",
+          "severity": "POSITIVE",
+          "summary": "BHS English I Predicted Growth jumped 57 → 82 MOY, on pace for the 85 annual goal.",
+          "citations": []
+        },
+        {
+          "pattern_id": "RF_19",
+          "severity": "WATCH",
+          "summary": "BHS English II Predicted Growth flat at 72 MOY, 13 points below the 85 annual goal.",
+          "citations": ["TEC §11.1515", "TEC §11.251"],
+          "cross_fires_with": ["P08"]
+        },
+        {
+          "pattern_id": "PF_C",
+          "severity": "POSITIVE",
+          "summary": "BJH 8th grade Reading Predicted Growth hit the 90 annual goal at MOY — two months before STAAR. Reading and Math both beat annual Meets goals.",
+          "citations": []
+        },
+        {
+          "pattern_id": "RF_19",
+          "severity": "RED_FLAG",
+          "summary": "BJH 6th Math Meets dropped 68.4% → 58.8% (below 63% annual goal); Predicted Growth dropped 71 → 67 — wrong direction with STAAR ~6 weeks out.",
+          "citations": ["TEC §11.1515", "TEC §11.251"],
+          "cross_fires_with": ["P08"],
+          "_override_applied": "wrong-direction trajectory → RED_FLAG"
+        },
+        {
+          "pattern_id": "RF_09",
+          "severity": "WATCH",
+          "summary": "BJH 8th Science and Social Studies interim data — unclear whether reported results are Interim #1 or Interim #2.",
+          "citations": []
+        }
+      ],
+      "expected_questions_min": 8,
+      "expected_questions_max": 12,
+      "expected_question_themes": [
+        "BHS Algebra I specific 6-week intervention plan",
+        "BJH 8th grade practices codification for 6th/7th",
+        "BJH 6th math intervention",
+        "IXL vs Interim instrument weighting",
+        "BHS Reading goal raise opportunity",
+        "BHS Science 98% goal realism",
+        "BJH 8th Science / Social Studies interim clarification",
+        "BHS US History BOY baseline meaningfulness",
+        "plan for Algebra I in 2026-27 if annual goal missed",
+        "mid-year transparency protocol when a campus will miss annual goal"
+      ]
+    },
+    {
+      "item_id": "7",
+      "title": "Bond Series 2026 Parameter Order",
+      "item_type": "ACTION",
+      "expected_flags": [
+        {
+          "pattern_id": "RF_03",
+          "severity": "RED_FLAG",
+          "summary": "This is a debt RESTRUCTURING, not a savings refunding. Samco analysis shows zero debt service savings; total hold-harmless cost is $32.2M; total net debt service is $164.4M.",
+          "citations": ["TEC §45.001", "MSRB G-17", "MSRB G-42"],
+          "cross_fires_with": ["P13"]
+        },
+        {
+          "pattern_id": "RF_02",
+          "severity": "WATCH",
+          "summary": "Execution authority delegated to Pricing Officer with dollar ceiling ($5M max gross loss, 6% TIC cap) and one-year expiration, but no explicit report-back to the Board on final terms.",
+          "citations": ["TGC §1207.007", "TGC §1371.053"],
+          "cross_fires_with": ["P16"],
+          "_override_applied": "2 of 3 disqualifier elements present → WATCH (not RED_FLAG)"
+        },
+        {
+          "pattern_id": "RF_22",
+          "severity": "RED_FLAG",
+          "summary": "I&S Fund Balance declined 80% in three years ($1.94M → $389K); refunding draws another $2M from it over four years.",
+          "citations": ["TEC §44.002"],
+          "blocked_on": "v2"
+        },
+        {
+          "pattern_id": "RF_21",
+          "severity": "RED_FLAG",
+          "summary": "$32.2M hold-harmless dependency over 22 years — Hold Harmless is a statutory construct (HB3 2019, HB2 2023), not a constitutional guarantee.",
+          "citations": ["TEC §45.001"],
+          "blocked_on": "v2"
+        },
+        {
+          "pattern_id": "RF_24",
+          "severity": "WATCH",
+          "summary": "Same annual parameter order authorized last May; recurring annual refunding authorizations suggest structural mismatch between debt service costs and the $0.50 I&S rate.",
+          "citations": ["TGC §1371.053"],
+          "blocked_on": "v2"
+        },
+        {
+          "pattern_id": "RF_27",
+          "severity": "WATCH",
+          "summary": "Parameter Order §3(c) authorizes Capital Appreciation Bonds; total compounded cost is not disclosed.",
+          "citations": ["TGC Ch. 1207"],
+          "blocked_on": "v2",
+          "_note": "Secondary gap in gaps_for_v2.md — CABs"
+        },
+        {
+          "pattern_id": "RF_04",
+          "severity": "WATCH",
+          "summary": "Agenda title references Series 2016 and Series 2017 but the parameter order's Schedule I and the Samco analysis also include Series 2015.",
+          "citations": ["TGC §551.041"],
+          "cross_fires_with": ["P11"]
+        },
+        {
+          "pattern_id": "RF_21",
+          "severity": "RED_FLAG",
+          "summary": "Combined legislative dependency: $32.2M Hold Harmless on the bond side plus $1.18M/yr restricted HB2 allotments on the budget side — a single legislative session could alter both funding streams.",
+          "citations": [],
+          "blocked_on": "v2"
+        }
+      ],
+      "expected_questions_min": 8,
+      "expected_questions_max": 12,
+      "expected_question_themes": [
+        "confirmation that debt service savings column is zero",
+        "legislative-risk stress test on Hold Harmless (25% / 50% reductions)",
+        "minimum safe I&S fund balance and timing",
+        "PCAD certified values (April 24) seen before Pricing Officer executes",
+        "taxable value growth at 0% or negative scenario",
+        "multi-year debt management strategy vs annual parameter orders",
+        "Capital Appreciation Bond contemplation",
+        "6% TIC cap vs current market",
+        "combined General Fund + I&S reserves adequacy",
+        "downside of passing the order and not executing"
+      ]
+    },
+    {
+      "item_id": "8",
+      "title": "Teacher Contracts 2026-2027",
+      "item_type": "ACTION",
+      "expected_flags": [],
+      "expected_questions_min": 3,
+      "expected_questions_max": 5,
+      "expected_question_themes": [
+        "subjects the three probationary teachers teach, relationship to Algebra I / 6th math declines",
+        "Contract Addendum specifics",
+        "alt-cert completion and certification exam status",
+        "alt-cert hiring trend at Brock",
+        "total probationary teacher count and retention rate"
+      ]
+    },
+    {
+      "item_id": "9",
+      "title": "TIA Payouts",
+      "item_type": "ACTION",
+      "expected_flags": [
+        {
+          "pattern_id": "P11",
+          "severity": "WATCH",
+          "summary": "Agenda placement mismatch — cover sheet labels this 'Consent Agenda Action Item' while the agenda places it under Business Action J.3.",
+          "citations": ["TGC §551.041"]
+        },
+        {
+          "pattern_id": "RF_25",
+          "severity": "WATCH",
+          "summary": "First-time material commitment (entering TIA program) placed on action agenda with 'Prior Discussion Date: None' — suggests pulling from any consent grouping for fuller discussion.",
+          "citations": ["TEC §21.3521"],
+          "blocked_on": "v2"
+        }
+      ],
+      "expected_questions_min": 3,
+      "expected_questions_max": 5,
+      "expected_question_themes": [
+        "whether to pull from consent grouping for fuller discussion",
+        "designation level (Recognized / Exemplary / Master) funding range",
+        "Brock building own TIA designation system vs accepting transfers",
+        "withdrawal process and ongoing TEA compliance obligations",
+        "90/10 split policy adoption and 10% district portion use"
+      ]
+    },
+    {
+      "item_id": "10",
+      "title": "Fund 491 Student Nutrition Budget Amendment",
+      "item_type": "ACTION",
+      "expected_flags": [
+        {
+          "pattern_id": "RF_20",
+          "severity": "WATCH",
+          "summary": "Food account balance at -$36.96 — essentially depleted.",
+          "citations": ["TEC §44.002", "TEC §44.006"]
+        },
+        {
+          "pattern_id": "RF_07",
+          "severity": "WATCH",
+          "summary": "Late-cycle budget amendment after the account was drawn down — why wasn't this brought sooner?",
+          "citations": ["TEC §44.006"],
+          "cross_fires_with": ["P07"]
+        }
+      ],
+      "expected_questions_min": 3,
+      "expected_questions_max": 5,
+      "expected_question_themes": [
+        "why the amendment wasn't brought sooner",
+        "whether price adjustments were within existing vendor contract terms",
+        "actual participation/sales data for new menu items",
+        "sufficiency of $15K for remaining 2.5 months"
+      ]
+    },
+    {
+      "item_id": "11",
+      "title": "School Bus Purchase — TERP Grant",
+      "item_type": "ACTION",
+      "expected_flags": [
+        {
+          "pattern_id": "RF_06",
+          "severity": "WATCH",
+          "summary": "Blue Bird tariff surcharge language and Rush 'subject to adjustment' clause; quote expires 5/1/2026.",
+          "citations": ["TEC §44.031"]
+        },
+        {
+          "pattern_id": "PF_A",
+          "severity": "POSITIVE",
+          "summary": "TERP grant covers $205,751 of $325,076 total cost (63%); replaces 21–25 year old diesel buses with propane.",
+          "citations": ["TEC §44.031", "Texas Health & Safety Code Ch. 390"]
+        },
+        {
+          "pattern_id": "P16",
+          "severity": "WATCH",
+          "summary": "Grant contract signed 2/2/26 by Troy Roberts — when and how did the Board authorize entering this grant contract?",
+          "citations": ["TEC §11.151(b)", "TEC §11.1512"]
+        }
+      ],
+      "expected_questions_min": 4,
+      "expected_questions_max": 6,
+      "expected_question_themes": [
+        "realistic delivery date after 180-250 day lead time",
+        "tariff surcharge estimate and exposure above TERP grant",
+        "annual TCSB reporting and compliance responsibility",
+        "old bus salvage value vs emissions compliance destruction",
+        "$119K district cost budget coverage",
+        "delegated authority on the 2/2/26 grant contract signing"
+      ]
+    }
+  ]
+}
