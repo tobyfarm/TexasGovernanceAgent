@@ -75,7 +75,9 @@
           "severity": "POSITIVE",
           "summary": "Debt Service revenue at 119.72% of budget — district over-collected I&S levy this cycle.",
           "citations": [],
-          "_extends": "PF_C revenue sub-type; see gaps_for_v2.md item on extending PF_C to revenue bright spots"
+          "_extends": "PF_C revenue sub-type; see gaps_for_v2.md item on extending PF_C to revenue bright spots",
+          "blocked_on": "v2",
+          "_note": "Under 2026-04-23 tightened PF_C rules, scorecard-bright-spot only. Revenue over-collection is a secondary gap (PF_C extension) pending Toby's v2 review."
         },
         {
           "pattern_id": "RF_20",
@@ -153,7 +155,9 @@
           "severity": "POSITIVE",
           "summary": "CTE revenue tripled from $963K (2016) to $2.94M (projected 2025/26); FTEs more than doubled.",
           "citations": [],
-          "_extends": "PF_C revenue sub-type"
+          "_extends": "PF_C revenue sub-type",
+          "blocked_on": "v2",
+          "_note": "Under 2026-04-23 tightened PF_C rules, scorecard-bright-spot only. CTE revenue growth is a secondary gap (PF_C extension) pending Toby's v2 review."
         },
         {
           "pattern_id": "RF_22",
