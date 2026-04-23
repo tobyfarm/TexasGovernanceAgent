@@ -370,6 +370,71 @@ def verify_all(
     return [verify(c, corpus_dir=corpus_dir) for c in citations]
 
 
+# Citation-extraction patterns. Ordered most-specific to least-specific so
+# that "Texas Education Code 11.151(b)" matches before bare "§11.151(b)".
+_CITATION_PATTERNS: list[re.Pattern[str]] = [
+    # Texas Constitution — e.g. "Tex. Const. art. VII §5", "Article VII, Section 5"
+    re.compile(
+        r"(?:Tex(?:as)?\.?\s+)?Const(?:itution|\.)?\s+art(?:icle|\.)?\s+[IVX]+[,\s]*"
+        r"(?:§|Section|Sec\.)\s*\d+",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"Article\s+[IVX]+[,\s]+(?:§|Section|Sec\.)\s*\d+"
+        r"(?:\s+of\s+the\s+Texas\s+Constitution)?",
+        re.IGNORECASE,
+    ),
+    # SEC Rule — e.g. "SEC Rule 15c2-12"
+    re.compile(r"SEC\s+Rule\s+\d+[A-Za-z]+\d+(?:-\d+)?", re.IGNORECASE),
+    # MSRB Rule — e.g. "MSRB Rule G-42", "MSRB G-42"
+    re.compile(r"MSRB(?:\s+Rule)?\s+[A-Z]-\d+"),
+    # Qualified code + section — e.g. "Texas Education Code 11.151(b)",
+    # "Tex. Educ. Code §11.151(b)", "TEC §11.151(b)", "Government Code 551.074"
+    re.compile(
+        r"(?:Tex(?:as)?\.?\s+)?"
+        r"(?:Ed(?:ucation|uc)?\.?|Gov(?:ernment|t|'t)?\.?|Admin(?:istrative)?\.?)?\s*"
+        r"Code\s+§{0,2}\s*\d+\.\d+[A-Za-z0-9()]*(?:[–\-]\d+\.\d+[A-Za-z0-9()]*)?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"\b(?:TEC|TGC|TAC)\s+§{0,2}\s*\d+\.\d+[A-Za-z0-9()]*"
+        r"(?:[–\-]\d+\.\d+[A-Za-z0-9()]*)?"
+    ),
+    # Local-policy codes — BE(LOCAL), BED(LOCAL), etc.
+    re.compile(r"\b[A-Z]{2,5}\([A-Z]+\)"),
+]
+
+
+def extract_citations(text: str) -> list[str]:
+    """Find citation-like strings in arbitrary text.
+
+    Used by the Day 3 eval harness to diff what the agent cited against
+    what the hand version cites. Ordered dedupe: preserves first-occurrence
+    order across the input text.
+    """
+    found: list[tuple[int, str]] = []  # (position, matched_string)
+    for pat in _CITATION_PATTERNS:
+        for m in pat.finditer(text):
+            raw = m.group(0).strip(" ,.;:")
+            # Balance parens: drop a lone trailing ")" that has no matching "(",
+            # but keep "(b)" / "(a)(5)" etc.
+            while raw.endswith(")") and raw.count("(") < raw.count(")"):
+                raw = raw[:-1].rstrip(" ,.;:")
+            found.append((m.start(), raw))
+
+    # Sort by position, then dedupe while preserving first-occurrence order.
+    found.sort(key=lambda x: x[0])
+    seen: set[str] = set()
+    out: list[str] = []
+    for _, s in found:
+        key = re.sub(r"\s+", " ", s).lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(s)
+    return out
+
+
 @dataclass
 class CorpusEntry:
     """One heading in the bundled corpus."""

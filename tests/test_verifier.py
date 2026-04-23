@@ -249,6 +249,56 @@ def test_list_corpus_entries_surfaces_gaps(tmp_path: Path) -> None:
     assert len(gap) == 1 and gap[0].has_text is False
 
 
+def test_extract_citations_finds_the_common_forms() -> None:
+    extract_citations = _mod.extract_citations
+    text = """
+    Under TEC §11.151(b), the trustees govern.
+    Texas Government Code 551.074 covers personnel.
+    MSRB Rule G-42 applies. SEC Rule 15c2-12 requires continuing disclosure.
+    The PSF is grounded in Article VII, Section 5 of the Texas Constitution.
+    Local authority is BE(LOCAL).
+    """
+    cites = extract_citations(text)
+    assert any("11.151(b)" in c for c in cites)
+    assert any("551.074" in c for c in cites)
+    assert any("G-42" in c for c in cites)
+    assert any("15c2-12" in c for c in cites)
+    assert any("Article VII" in c for c in cites)
+    assert any("BE(LOCAL)" in c for c in cites)
+
+
+def test_brock_hand_pre_read_citations_all_recognized() -> None:
+    """The acceptance test: every citation in the hand-written Brock pre-read
+    must be recognized by the corpus. No 'unknown' allowed — either the
+    citation is a real authority in the corpus (verified/corpus_gap) or it's
+    specific-enough to suggest a near-miss candidate (partial_match).
+
+    If this test fails, the hand author cited an authority Agent B hasn't
+    scaffolded yet. Action: add the scaffold and re-run.
+    """
+    extract_citations = _mod.extract_citations
+    pre_read = REPO_ROOT / "examples" / "brock_april_13_2026_prereadhand.md"
+    if not pre_read.exists():
+        # Skip if the reference artifact isn't present (fresh checkout before
+        # main merge); the test is informational in that case.
+        return
+    text = pre_read.read_text(encoding="utf-8")
+    cites = extract_citations(text)
+    assert len(cites) >= 20, f"Expected ≥20 citations, extracted {len(cites)}"
+
+    unknown: list[tuple[str, str]] = []
+    for cite in cites:
+        r = verify(cite)
+        if r.status == "unknown":
+            unknown.append((cite, r.diagnostic or ""))
+
+    assert not unknown, (
+        "The hand pre-read cites authorities not in the scaffolded corpus. "
+        "Add a scaffold heading for each, then re-run. Unrecognized: "
+        + "; ".join(f"{c!r}" for c, _ in unknown)
+    )
+
+
 def test_live_corpus_is_scaffolded_not_yet_verified() -> None:
     """The bundled corpus at statutes/ is scaffolded — exact headings exist
     but the blockquotes are not yet populated. Until Toby pastes verbatim
