@@ -162,12 +162,12 @@ Each row below maps to one pattern in `principles.md` §II. The "Fires on" colum
 ### RF_18 — Deliberation that belongs in open session routed to closed session
 - **Fires on:** closed session is posted on a subject that is not personnel-specific under §551.074, not attorney consultation on litigation or negotiation under §551.071, not real property under §551.072, not security under §551.076, and not one of the other enumerated exceptions. General policy deliberation routed to closed session.
 - **Default severity:** RED_FLAG when the posted or convened subject clearly exceeds the cited exception.
-- **Prospective-reminder mode.** When §551.074 is in a posted closed-session range (including blanket ranges that include it), emit a WATCH-severity reminder that §551.074 covers specific individuals by name or position only — general employment policy, salary schedules, and working conditions must be deliberated in open session per TOMA. This fires even before the session convenes; it is the standing prospective warning the hand version applies on closed-session items.
-- **Disqualifier (RED_FLAG):** the closed-session subject matches the cited subsection (e.g., §551.074 used only on specific named individuals).
+- **Prospective-reminder mode.** When §551.074 is in a posted closed-session range (including blanket ranges that include it), emit a RED_FLAG-severity standing reminder that §551.074 covers specific individuals by name or position only — general employment policy, salary schedules, and working conditions must be deliberated in open session per TOMA. This fires even before the session convenes; it is the standing prospective warning the hand version applies on closed-session items. Severity is RED_FLAG (not WATCH) because the §551.074 narrow-scope rule is doctrine, not a hedge.
+- **Disqualifier (RED_FLAG posted-subject mode):** the closed-session subject matches the cited subsection (e.g., §551.074 used only on specific named individuals).
 - **Anchors:** TGC §551.071, §551.072, §551.074, §551.076, §551.101.
 - **Cross-fires with:** P04, P11.
-- **Summary line (RED_FLAG):** "Subject routed to closed session appears to exceed the cited exception — Chapter 551 exceptions are read narrowly."
-- **Summary line (WATCH, prospective):** "§551.074 covers specific individuals by name/position only. If the discussion tonight veers into general employment policy, working conditions, or salary schedules, it must return to open session."
+- **Summary line (RED_FLAG, posted subject exceeds exception):** "Subject routed to closed session appears to exceed the cited exception — Chapter 551 exceptions are read narrowly."
+- **Summary line (RED_FLAG, prospective §551.074 reminder):** "§551.074 (personnel) covers specific individuals by name or position only. If the discussion tonight veers into general employment policy, working conditions, or salary schedules, it must return to open session."
 
 ### RF_19 — Scorecard pacing miss near an assessment window
 - **Fires on:** scorecard update shows off-pace on a goal with fewer than 90 days to the next assessment window (STAAR, EOC, TELPAS) and no intervention plan is named.

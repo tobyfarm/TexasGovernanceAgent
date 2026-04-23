@@ -189,6 +189,41 @@ Calibration actions 1–3 and 6–7 are in-Skill edits I can apply directly. Ite
 
 ---
 
+## 2026-04-23 · Item K re-run against actual PDF
+
+**Setup.** `examples/brock_april_13_2026.pdf` landed on `main` and was pulled into the worktree. Re-ran Item K against the verbatim text extracted from the PDF (page 2 for the agenda posting; page 7 for the March 9 minutes).
+
+**Verbatim posted text (page 2).**
+> K. CLOSED SESSION, PURSUANT TO TEXAS GOVERNMENT CODE, SECTIONS 551.071 THROUGH 551.087
+> L. RECONVENE FROM CLOSED SESSION, FOR ACTIONS RELATIVE TO ITEMS CONSIDERED DURING CLOSED SESSION.
+> 1. Action on Matters in Closed Session.
+
+**Prior-meeting context (March 9, 2026 minutes, page 7).**
+> K. CLOSED SESSION, PURSUANT TO TEXAS GOVERNMENT CODE, SECTIONS 551.071 THROUGH 551.087
+> The Board of Trustees did not meet in Closed Session.
+> L.1. No action was taken.
+
+The same blanket posting has been used in prior meetings without closed session being convened — boilerplate pattern. This is context, not a separate flag.
+
+**Skill emission vs hand version.**
+
+| Flag | Skill emits | Hand version | Status |
+|---|---|---|---|
+| RF_01 blanket citation | WATCH | WATCH | ✅ match |
+| P11 specificity on the record | WATCH | (implicit WATCH on the blanket) | ✅ match |
+| RF_18 §551.074 prospective reminder | **WATCH → updated to RED_FLAG** | RED FLAG | ⚠ fixed this pass |
+| Closed-session four-question template | 4 questions | 4 questions (near-verbatim) | ✅ match |
+
+**Calibration adjustment applied.** RF_18 prospective-reminder mode upgraded from WATCH to RED_FLAG when §551.074 is in a posted range. Rationale: hand version emits RED FLAG on this exact language, and the §551.074 narrow-scope rule is doctrine (it covers specific individuals by name/position only; general employment policy must be deliberated in open session), not a hedge. Both SKILL.md and the expected-flags fixture were updated.
+
+**Prior-meeting override considered and not applied.** The Day-2 override rule states "Upgrade WATCH → RED_FLAG when the same signal has fired on this item in prior meetings without remediation." The March 9 minutes show the same blanket posting was made, but the Board did not actually meet in closed session — so there was no substantive violation to remediate. Applying the override here would escalate the WATCH to RED_FLAG despite the hand version treating it as WATCH. The hand version is the ground truth, so the override stays dormant on this item. Note this for Day 3 eval: the override is calibrated for "violation recurring without fix," not "boilerplate posting recurring without harm."
+
+**Agenda-wide sanity check from the PDF pull.**
+- Page 2 confirms 11 numbered agenda items (A–M with numbered subitems). Matches the hand-version's 11 top-level analysis targets and Agent A's recently-landed "ingestion correctly identifies all 13 Brock April 13 items" (Agent A counts each subitem; same substrate).
+- Page 7's March 9 minutes also confirm the same posting pattern across meetings, which matters for the boilerplate diagnosis above and for Agent B's corpus work on TGC §551 generally.
+
+---
+
 ## Template for future entries
 
 ```

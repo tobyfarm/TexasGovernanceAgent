@@ -29,8 +29,8 @@
         },
         {
           "pattern_id": "RF_18",
-          "severity": "WATCH",
-          "summary": "§551.074 covers specific individuals by name/position only; if discussion veers into general employment policy, it must return to open session.",
+          "severity": "RED_FLAG",
+          "summary": "§551.074 (personnel) covers specific individuals by name or position only; if discussion tonight veers into general employment policy, working conditions, or salary schedules, it must return to open session.",
           "citations": ["TGC §551.074", "TGC §551.102"],
           "cross_fires_with": ["P04"],
           "_mode": "prospective-reminder"
