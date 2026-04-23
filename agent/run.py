@@ -324,10 +324,17 @@ async def analyze_pdf_stream(
 
     run_id = uuid.uuid4().hex[:12]
     source_pdf = str(pdf_path)
+    started_at = datetime.now(UTC)
 
     yield AnalyzeEvent(
         "ingest_done",
-        {"run_id": run_id, "item_count": len(items), "source_pdf": source_pdf, "mode": mode},
+        {
+            "run_id": run_id,
+            "item_count": len(items),
+            "source_pdf": source_pdf,
+            "mode": mode,
+            "started_at": started_at.isoformat(),
+        },
     )
 
     sem = asyncio.Semaphore(concurrency or DEFAULT_CONCURRENCY)
@@ -335,32 +342,61 @@ async def analyze_pdf_stream(
     # they finish. Preserving input order is a post-gather concern.
     queue: asyncio.Queue[AnalyzeEvent] = asyncio.Queue()
     results: list[ItemAnalysis | None] = [None] * len(items)
+    completed_count = 0
+
+    def _progress_payload(extra: dict) -> dict:
+        elapsed = (datetime.now(UTC) - started_at).total_seconds()
+        completed = completed_count
+        total = len(items)
+        remaining = total - completed
+        avg = (elapsed / completed) if completed else 0.0
+        eta = int(avg * remaining) if avg else None
+        return {
+            **extra,
+            "completed": completed,
+            "total": total,
+            "percent": round(completed / total * 100, 1) if total else 0,
+            "elapsed_seconds": int(elapsed),
+            "eta_seconds": eta,
+        }
 
     async def _worker(idx: int, item: AgendaItem) -> None:
+        nonlocal completed_count
         async with sem:
-            await queue.put(AnalyzeEvent("item_start", {"idx": idx, "item_id": item.item_id}))
+            await queue.put(
+                AnalyzeEvent(
+                    "item_start",
+                    _progress_payload({"idx": idx, "item_id": item.item_id}),
+                )
+            )
             try:
                 analysis = await _run_item(
                     item, cwd=REPO_ROOT, run_id=run_id, source_pdf=source_pdf, mode=mode
                 )
                 results[idx] = analysis
+                completed_count += 1
                 await queue.put(
                     AnalyzeEvent(
                         "item_done",
-                        {
-                            "idx": idx,
-                            "item_id": item.item_id,
-                            "analysis": analysis.model_dump(mode="json"),
-                        },
+                        _progress_payload(
+                            {
+                                "idx": idx,
+                                "item_id": item.item_id,
+                                "analysis": analysis.model_dump(mode="json"),
+                            }
+                        ),
                     )
                 )
             except Exception as exc:  # noqa: BLE001 — per-item isolation is intentional
                 logger.exception("item %s failed", item.item_id)
                 results[idx] = _placeholder_analysis(item, str(exc))
+                completed_count += 1
                 await queue.put(
                     AnalyzeEvent(
                         "item_error",
-                        {"idx": idx, "item_id": item.item_id, "error": str(exc)},
+                        _progress_payload(
+                            {"idx": idx, "item_id": item.item_id, "error": str(exc)}
+                        ),
                     )
                 )
 
@@ -520,7 +556,13 @@ async def _run_cli(args) -> tuple[int, AnalysisResult | None, str | None]:
                 print(f"[start ] item {event.data['item_id']}")
             elif event.name == "item_done":
                 done += 1
-                print(f"[done  ] item {event.data['item_id']}  ({done}/{item_count})")
+                eta = event.data.get("eta_seconds")
+                eta_str = f" eta={eta}s" if eta is not None else ""
+                pct = event.data.get("percent", 0)
+                print(
+                    f"[done  ] item {event.data['item_id']}  "
+                    f"({done}/{item_count}, {pct}%){eta_str}"
+                )
             elif event.name == "item_error":
                 done += 1
                 print(
