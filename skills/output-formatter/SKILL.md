@@ -178,13 +178,103 @@ Keep the DOCX faithful to the markdown. Fancy formatting can wait until after th
 
 ## Rendering entrypoint
 
+### In-process (Agent A, Agent D, tests)
+
 ```python
-from skills.output_formatter.render import render
+import sys
+from pathlib import Path
+
+# The skill directory name (`output-formatter`) contains a dash, so it is not
+# a valid Python package name. Add it to sys.path and import `render` as a
+# top-level module instead of importing the directory as a package.
+SKILL_DIR = Path(__file__).resolve().parent.parent / "skills" / "output-formatter"
+sys.path.insert(0, str(SKILL_DIR))
+
+from render import render, render_to_file  # type: ignore[import-not-found]
 
 markdown = render(analysis_result)  # dispatches on analysis_result.output_mode
 ```
 
-`render()` accepts an `AnalysisResult` pydantic instance or a plain dict with the same shape. It returns a string of markdown. It does not write to disk — the caller decides where the output goes.
+`render()` accepts an `AnalysisResult` pydantic instance or a plain dict with the same shape and returns a string of markdown. It does not write to disk. Use `render_to_file(result, Path("…/result.md"))` for the common "write markdown next to the JSON" case.
+
+### Subprocess (cross-language callers, shell scripts)
+
+```bash
+uv run python skills/output-formatter/render.py \
+  --from-json logs/runs/<run_id>/result.json \
+  --out logs/runs/<run_id>/result.md \
+  --metadata-json config/brock_meeting_metadata.json
+```
+
+`--metadata-json` is optional; its top-level object is merged into `meeting_metadata` (overrides win over both the analysis result's own metadata and the built-in defaults).
+
+### Metadata overrides
+
+Agent A's pipeline currently emits `meeting_metadata = {source, run_id}` — sparse, because district/trustee/meeting_date are configuration, not analysis output. Pass them in via `metadata_overrides=...`:
+
+```python
+markdown = render(
+    result,
+    metadata_overrides={
+        "district_name_upper": "BROCK ISD",
+        "meeting_type": "Regular Meeting",
+        "meeting_date": "April 13, 2026",
+        "meeting_time": "6:00 PM",
+        "location": "BHS Cafeteria",
+        "trustee_name": "Toby Farmer",
+        "page_count": 166,
+    },
+)
+```
+
+When overrides are absent, the renderer fills in visible `"(not provided)"` placeholders so missing configuration is obvious in the output rather than silently pretending the meeting metadata was known.
+
+---
+
+## Adapter behavior (normalization layer)
+
+`render()` runs a normalization pass on the `AnalysisResult` before handing data to the template. The adapter makes the template tolerant of the shape drift between Agent A's analysis pipeline and the hand-pre-read target format.
+
+**Executive summary rows.** Agent A emits `{item_id, title, type, pages, risk}` where `risk` is a raw flag severity (`RED_FLAG` / `WATCH` / `POSITIVE` / `NONE`). The template consumes `{item_title, key_finding, risk_level}`. The adapter:
+
+- Maps `risk` → `risk_level` via: `RED_FLAG → HIGH`, `WATCH → MEDIUM`, `POSITIVE → LOW`, `NONE → LOW`.
+- Uses the raw `title` as `item_title`.
+- Derives `key_finding` from the first `Flag.summary` on the matching item, or from the first line of the item summary if no flags are present.
+
+The `HIGH/MEDIUM/LOW` mapping is a **lossy fallback**. The hand version's risk level is a curated judgment — a scorecard item with a RED_FLAG can be `MEDIUM` overall if it's a monitoring reminder rather than a structural issue. When Agent C / Agent A grow a per-item `risk_level` field, the adapter will prefer it and drop the severity-based fallback.
+
+**Meeting metadata.** Defaults fill in missing fields with `"(not provided)"` placeholders; `metadata_overrides` wins over raw; raw wins over defaults.
+
+Rows that already have the template shape (`item_title + key_finding + risk_level`) are passed through unchanged, so callers who want full control can bypass the adapter by emitting the target shape directly.
+
+---
+
+## Template heuristics
+
+### "What Is Happening" scaffold is conditional
+
+Simple items (closed session, teacher contracts, consent sub-items) use the scaffolded `## What Is Happening` heading above a prose summary. Complex items in the hand reference — Budget Workshop, Balanced Scorecard, Bond Refunding — carry their own `## ` sub-sections inside the summary (e.g., `## Enrollment Trend: The Story in the Numbers`) and skip the scaffold.
+
+The template detects this automatically: if `summary` starts with `## ` or contains `\n## `, the scaffold heading is suppressed and the summary is emitted raw. When Agent A/C populates `summary` with internal structure, the right thing happens without any flags on the ItemAnalysis.
+
+### Prep checklist is skipped when empty
+
+Agent A's pipeline emits `prep_checklist=[]` today — the checklist is curated, not analysis output. When it's empty, the entire `# Meeting Preparation Checklist` section is suppressed and the document flows straight from the last item's questions into the TOMA footer.
+
+### Governance question numbering runs continuously
+
+The template maintains a running counter across all items so numbering is continuous across the whole pre-read (item K's questions are 1–4, item 4C's are 5–7, item 5's are 8–9, and so on). This matches the hand reference exactly.
+
+---
+
+## Known structural deltas vs. the hand reference
+
+Intentionally accepted gaps, tracked here so reviewers don't flag them as bugs:
+
+- **Item 4 consent grouping.** The hand version groups 4A–4E under a single `# Item 4: Consent Agenda` parent with `## 4A:` children. Agent A's ingestion emits each sub-item as its own top-level item. We render the flatter structure. Fix requires either a `parent_item_id` field on `AgendaItem` or a consent-grouping pass in Agent A.
+- **Executive summary cherry-picking.** The hand version shows seven curated rows (the critical items). Agent A emits one row per item. Fix requires a per-item `include_in_executive_summary: bool` or `executive_priority: int`.
+- **Curated `key_finding` synthesis.** The hand key-finding cells are multi-sentence digests of each item's governance significance. The adapter's first-flag fallback is structurally correct but tonally thin. Fix requires either a dedicated `ItemAnalysis.key_finding: str` field or a secondary model pass that writes exec-summary digests.
+- **Item K's "What the Law Says" heading.** The hand version uses this heading for Item K specifically (where the content is statutory text) vs. "Legal Framework" elsewhere. We always emit "Legal Framework". Minor.
 
 ---
 

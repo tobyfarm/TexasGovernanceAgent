@@ -200,6 +200,70 @@ BROCK_APRIL_13_DUMMY: dict = {
         },
         {
             "item": {
+                "item_id": "5",
+                "title": "Budget Workshop #1 (pp. 47-68)",
+                "pages": [47, 68],
+                "item_type": "DISCUSSION",
+                "attachments": ["Enrollment slide", "HB2 funding impact", "CFO risk slide"],
+            },
+            # Complex item: summary carries its own h2 sub-headings. The
+            # template detects this and skips the "## What Is Happening" scaffold.
+            "summary": (
+                "**Presented by:** Lance Rainey, CFO\n\n"
+                "**Type:** Discussion Item — No vote required (Workshop 1 of 3)\n\n"
+                "**Budget Timeline:** April = Intro/Overview | May = Compensation Direction | "
+                "June = Budget Adoption | Aug/Sept = Tax Rate Adoption\n\n"
+                "## **Enrollment Trend: The Story in the Numbers (p. 51)**\n\n"
+                "This is the most important slide in the entire presentation. The growth era "
+                "at Brock ISD is over. RADA has now declined for TWO consecutive years (-13, "
+                "then -1). Since M&O funding is driven by ADA, this directly reduces state "
+                "revenue.\n\n"
+                "## **CFO's Own Risk Assessment (p. 66)**\n\n"
+                "Lance Rainey's presentation explicitly identifies three key financial risks: "
+                "(1) Enrollment flattening/declining — funded solely on ADA for M&O; (2) "
+                "Legislative Uncertainty — HB2 funding could change; (3) Increased Fixed Costs "
+                "— insurance, utilities, maintenance on the new building are unavoidable."
+            ),
+            "key_data": "",
+            "legal_framework": "",
+            "flags": [
+                {
+                    "severity": "RED_FLAG",
+                    "pattern_id": "flat_enrollment_revenue_exposure",
+                    "summary": (
+                        "RADA has declined for TWO consecutive years (-13, then -1). "
+                        "Enrollment is down -3 this year."
+                    ),
+                    "detail": (
+                        "The district went from adding 237 RADA in 2021-22 to losing students. "
+                        "Since M&O funding is driven by ADA, this directly reduces state "
+                        "revenue. The 2023 bond and new multipurpose center were built for a "
+                        "growth trajectory that has stalled."
+                    ),
+                    "citations": [],
+                },
+                {
+                    "severity": "RED_FLAG",
+                    "pattern_id": "hb2_restricted_allotment_commitment",
+                    "summary": (
+                        "The $1.18M in restricted salary funds is ALREADY COMMITTED."
+                    ),
+                    "detail": (
+                        "If HB2 changes or sunsets in the next legislative session, the "
+                        "district will have structural salary obligations without the revenue "
+                        "to cover them."
+                    ),
+                    "citations": [],
+                },
+            ],
+            "questions": [
+                "RADA has declined for two consecutive years. What is the demographic projection for the next 3-5 years?",
+                "If HB2 restricted allotments ($1.18M) change or sunset, what is the contingency plan?",
+            ],
+            "citations": [],
+        },
+        {
+            "item": {
                 "item_id": "7",
                 "title": "Bond Series 2026 Parameter Order (pp. 87-127)",
                 "pages": [87, 127],
@@ -375,6 +439,57 @@ BROCK_APRIL_13_DUMMY: dict = {
         "**6. TIA (LOW risk):** Pass-through only, but consider whether this should be pulled from consent for first-time discussion.",
         "**7. Fund 491 Amendment (LOW risk):** Straightforward $15K increase. Ask if this is sufficient to finish the year.",
     ],
+}
+
+
+AGENT_A_SHAPED_DUMMY: dict = {
+    # Mirror of what Agent A's analyze_pdf_stream() actually emits today:
+    #   - meeting_metadata is {source, run_id} only
+    #   - executive_summary_table rows use the Agent A shape
+    #     (item_id, title, type, pages, risk) — NOT the template shape
+    #   - prep_checklist is []
+    # The renderer's _normalize() adapter is expected to turn this into
+    # template-shape data at render time.
+    "source_pdf": "examples/brock_april_13_2026.pdf",
+    "generated_at": datetime(2026, 4, 23, 12, 0, tzinfo=timezone.utc).isoformat(),
+    "output_mode": "BROCK_FULL",
+    "meeting_metadata": {
+        "source": "brock_april_13_2026.pdf",
+        "run_id": "abc123def456",
+    },
+    "executive_summary_table": [
+        {
+            "item_id": "K",
+            "title": "Closed Session (TGC 551.071-551.087)",
+            "type": "CLOSED_SESSION",
+            "pages": "1-2",
+            "risk": "RED_FLAG",
+        },
+        {
+            "item_id": "4C",
+            "title": "Revenue & Expenditure Reports (pp. 30-31)",
+            "type": "CONSENT",
+            "pages": "30-31",
+            "risk": "RED_FLAG",
+        },
+        {
+            "item_id": "7",
+            "title": "Bond Series 2026 Parameter Order (pp. 87-127)",
+            "type": "ACTION",
+            "pages": "87-127",
+            "risk": "RED_FLAG",
+        },
+        {
+            "item_id": "11",
+            "title": "School Bus Purchase — TERP Grant (pp. 137-166)",
+            "type": "ACTION",
+            "pages": "137-166",
+            "risk": "WATCH",
+        },
+    ],
+    # Items share structure with BROCK_APRIL_13_DUMMY.items
+    "items": BROCK_APRIL_13_DUMMY["items"],
+    "prep_checklist": [],
 }
 
 

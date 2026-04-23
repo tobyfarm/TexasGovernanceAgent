@@ -48,10 +48,22 @@ This report analyzes all {{ meeting_metadata.page_count }} pages of the {{ meeti
 {% for item in items %}
 
 # **Item {{ item.item.item_id }}: {{ item.item.title }}**
+{#
+  If the summary already carries its own `## ` sub-sections (as complex
+  items like Budget Workshop or Bond Refunding do in the hand reference),
+  skip the scaffolded "## What Is Happening" heading and let the authored
+  structure come through. Otherwise wrap the summary under the scaffold.
+#}
+{% set _summary_has_subheads = ('\n## ' in item.summary) or item.summary.startswith('## ') %}
+{% if _summary_has_subheads %}
+
+{{ item.summary }}
+{% else %}
 
 ## **What Is Happening**
 
 {{ item.summary }}
+{% endif %}
 {% if item.key_data %}
 
 ## **Key Data from Attachment**
@@ -79,6 +91,8 @@ This report analyzes all {{ meeting_metadata.page_count }} pages of the {{ meeti
 {% endif %}
 {% endfor %}
 
+{% if prep_checklist %}
+
 # **Meeting Preparation Checklist**
 
 Use this checklist to prepare for effective participation in tonight's meeting:
@@ -86,5 +100,6 @@ Use this checklist to prepare for effective participation in tonight's meeting:
 
 {{ step }}
 {% endfor %}
+{% endif %}
 
 *Remember: Under TOMA, all votes must occur in open session. Confirm closed session is properly posted and recorded.*

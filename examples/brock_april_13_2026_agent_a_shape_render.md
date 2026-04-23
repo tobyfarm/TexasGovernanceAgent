@@ -16,10 +16,10 @@ This report analyzes all 166 pages of the April 13, 2026 board book. Below are t
 
 | Agenda Item | Key Finding | Risk Level |
 | :---- | :---- | :---- |
-| **Bond Series 2026** | Restructuring (NOT savings). Up to $5M gross cost to hold I&S at $0.50. Debt extends to 2048. $32.2M in hold harmless. | **HIGH** |
-| **Budget Workshop** | Flat enrollment (2,042 RADA). HB2 brings $1.18M restricted funds already committed to salary. Taxable value growth slowing (3.96%). | **HIGH** |
-| **Balanced Scorecard** | MOY follow-up to March 9. BHS Algebra I Predicted Growth dropped 81→62 vs 85 annual goal (biggest pacing miss). BJH 8th hit 90 Reading goal at MOY. | **MEDIUM** |
-| **Bus Purchase** | $325K for 2 buses; $205K TERP grant offsets. Net cost $119K. Tariff risk flagged by vendor. Quote expires 5/1/26. | **LOW** |
+| **Closed Session (TGC 551.071-551.087)** | The blanket citation (551.071-551.087) gives the board maximum flexibility but also means almost ANY topic could potentially be discussed in closed session. | **HIGH** |
+| **Revenue & Expenditure Reports (pp. 30-31)** | General Fund revenue at 71.65% realized with ~58% of the fiscal year elapsed (through March) looks healthy. | **HIGH** |
+| **Bond Series 2026 Parameter Order (pp. 87-127)** | The hold harmless amount of $32.2M is massive. This represents the cumulative cost of keeping the I&S rate at $0.50 while extending debt. | **HIGH** |
+| **School Bus Purchase — TERP Grant (pp. 137-166)** | Blue Bird reserves the right to implement a tariff surcharge on bus sales dependent on tariffs on Mexican, Canadian, and/or Chinese imports. | **MEDIUM** |
 
 # **Item K: Closed Session (TGC 551.071-551.087)**
 
@@ -181,23 +181,5 @@ The district is requesting approval to purchase two new 77-passenger propane-fue
 
 18. *Is the $119K district cost budgeted for 2026-27, or does it need a separate budget amendment?*
 
-
-# **Meeting Preparation Checklist**
-
-Use this checklist to prepare for effective participation in tonight's meeting:
-
-**1. Bond Refunding (HIGH priority):** Understand that this is restructuring at a cost, not savings. Press Samco on the hold harmless costs and what happens if taxable value growth slows.
-
-**2. Budget Workshop (HIGH priority):** Focus on the implications of flat enrollment, decelerating tax base growth, and $1.18M in restricted salary commitments. Ask about fund balance trajectory.
-
-**3. Balanced Scorecard (MEDIUM priority):** BHS Algebra I Predicted Growth dropped 81→62 vs the 85 annual goal — the single biggest pacing miss. Demand a specific 6-week intervention plan before STAAR.
-
-**4. Bus Purchase (LOW risk, time-sensitive):** Good use of grant dollars. Watch the tariff language. Quote expires 5/1.
-
-**5. Teacher Contracts (LOW risk):** Routine for 3 probationary teachers. Confirm what subjects they teach relative to scorecard concerns.
-
-**6. TIA (LOW risk):** Pass-through only, but consider whether this should be pulled from consent for first-time discussion.
-
-**7. Fund 491 Amendment (LOW risk):** Straightforward $15K increase. Ask if this is sufficient to finish the year.
 
 *Remember: Under TOMA, all votes must occur in open session. Confirm closed session is properly posted and recorded.*
