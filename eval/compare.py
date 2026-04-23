@@ -28,11 +28,23 @@ from pathlib import Path
 
 # TEC §x.y(z), TGC §551.074, TAC §61.1, Local Policy CE (LEGAL), MSRB G-17, ...
 _CITATION_RE = re.compile(
-    r"\b(?:TEC|TGC|TAC|TEX\.?\s+EDUC\.?\s+CODE|TEX\.?\s+GOV\.?\s+CODE|MSRB|19\s*TAC)\s*§?\s*[\w\.\-()]+",
+    r"\b(?:TEC|TGC|TAC|TEX\.?\s+EDUC\.?\s+CODE|TEX\.?\s+GOV\.?\s+CODE|MSRB|19\s*TAC)\s*§?\s*[\w.()\-]+",
     re.IGNORECASE,
 )
 _FLAG_RE = re.compile(r"\b(RED[\s_-]?FLAG|WATCH|POSITIVE)\b", re.IGNORECASE)
 _HEADER_RE = re.compile(r"^#+\s+(.*?)\s*$", re.MULTILINE)
+
+# Canonicalize each authority so "TEC §11.151(b).", "TEC 11.151(b)", and
+# "TEC §11.151(b)" all compare equal when diffing hand vs generated.
+_NORMALIZE_STRIP = re.compile(r"[§\s.]+$")  # trailing punctuation/whitespace/§
+_NORMALIZE_WS = re.compile(r"\s+")
+_NORMALIZE_AUTHORITY_ALIASES = {
+    "tex. educ. code": "tec",
+    "tex educ code": "tec",
+    "tex. gov. code": "tgc",
+    "tex gov code": "tgc",
+    "19 tac": "tac",
+}
 
 
 @dataclass
@@ -60,8 +72,22 @@ def _norm(text: str) -> str:
     return text.strip().lower()
 
 
+def _normalize_citation(raw: str) -> str:
+    """Collapse whitespace, drop the section sign, strip trailing punctuation,
+    alias verbose code names (TEX. EDUC. CODE → TEC). Case-insensitive."""
+    s = raw.strip().lower()
+    s = s.replace("§", " ")
+    s = _NORMALIZE_WS.sub(" ", s)
+    for alias, canonical in _NORMALIZE_AUTHORITY_ALIASES.items():
+        if s.startswith(alias):
+            s = canonical + s[len(alias):]
+            break
+    s = _NORMALIZE_STRIP.sub("", s)
+    return _NORMALIZE_WS.sub(" ", s).strip()
+
+
 def _extract_citations(text: str) -> set[str]:
-    return {_norm(m.group(0)) for m in _CITATION_RE.finditer(text)}
+    return {_normalize_citation(m.group(0)) for m in _CITATION_RE.finditer(text)}
 
 
 def _flag_counts(text: str) -> dict[str, int]:
