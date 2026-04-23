@@ -112,11 +112,14 @@ async def _browser_to_gemini(ws: ServerConnection, session) -> None:
             log.warning("ignored unknown control frame: %s", kind)
 
 
-async def _gemini_to_browser(ws: ServerConnection, session) -> None:
-    """Forward Gemini server messages back to the browser."""
+async def _forward_one_turn(ws: ServerConnection, session) -> None:
+    """Forward messages for exactly one model turn.
+
+    The google-genai SDK's ``session.receive()`` yields the messages for
+    a single turn and exits after ``turn_complete``. Callers must invoke
+    it again for the next turn.
+    """
     async for response in session.receive():
-        # .text and .data are convenience properties on LiveServerMessage
-        # that concatenate across model_turn.parts — use them directly.
         if response.text:
             await ws.send(json.dumps({"type": "text", "text": response.text}))
         if response.data:
@@ -150,24 +153,6 @@ async def _gemini_to_browser(ws: ServerConnection, session) -> None:
             if sc.turn_complete:
                 await ws.send(json.dumps({"type": "turn_complete"}))
 
-        # Surface prompt-level safety feedback so callers can see why an
-        # empty response came back (blocked_reason, safety_ratings, etc.).
-        if getattr(response, "prompt_feedback", None):
-            pf = response.prompt_feedback
-            log.warning("prompt_feedback: %s", pf)
-            await ws.send(
-                json.dumps(
-                    {
-                        "type": "prompt_feedback",
-                        "block_reason": getattr(pf, "block_reason", None)
-                        and str(pf.block_reason),
-                        "block_reason_message": getattr(
-                            pf, "block_reason_message", None
-                        ),
-                    }
-                )
-            )
-
         # Session lifecycle events: forward so the client can reconnect
         # gracefully before Gemini closes the underlying socket.
         if response.go_away is not None:
@@ -190,6 +175,30 @@ async def _gemini_to_browser(ws: ServerConnection, session) -> None:
                         }
                     )
                 )
+
+        # Surface prompt-level safety feedback so callers can see why an
+        # empty response came back.
+        if getattr(response, "prompt_feedback", None):
+            pf = response.prompt_feedback
+            log.warning("prompt_feedback: %s", pf)
+            await ws.send(
+                json.dumps(
+                    {
+                        "type": "prompt_feedback",
+                        "block_reason": getattr(pf, "block_reason", None)
+                        and str(pf.block_reason),
+                        "block_reason_message": getattr(
+                            pf, "block_reason_message", None
+                        ),
+                    }
+                )
+            )
+
+
+async def _gemini_to_browser(ws: ServerConnection, session) -> None:
+    """Forward Gemini server messages across many turns in one session."""
+    while True:
+        await _forward_one_turn(ws, session)
 
 
 async def handle_session(ws: ServerConnection) -> None:
