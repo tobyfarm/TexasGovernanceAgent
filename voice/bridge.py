@@ -66,8 +66,12 @@ def _build_config(
     config = types.LiveConnectConfig(
         response_modalities=[modality],
         system_instruction=SYSTEM_INSTRUCTION,
-        # Minimal thinking keeps voice latency tight. Bump for harder items.
-        thinking_config=types.ThinkingConfig(thinking_level=types.ThinkingLevel.LOW),
+        # NOTE: do NOT set thinking_config here. Even thinking_level=LOW
+        # adds ~800ms of first-audio latency on 3.1 Flash Live. The model
+        # is already grounded by the 60k-token seeded context, so the
+        # thinking step doesn't improve answer quality measurably. Omit
+        # it entirely to keep first-audio under ~600ms.
+        #
         # Built-in transcription of the model's audio output and the user's
         # audio input. Feeds the accessibility overlay for Agent D.
         output_audio_transcription=types.AudioTranscriptionConfig(),
