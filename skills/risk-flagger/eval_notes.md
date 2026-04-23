@@ -224,6 +224,43 @@ The same blanket posting has been used in prior meetings without closed session 
 
 ---
 
+## 2026-04-23 · Item 6 / 7 / 9 verification against actual PDF
+
+**Items 6 (Balanced Scorecard), 7 (Bond Parameter Order), 9 (TIA Payouts) re-checked against the verbatim PDF text. No new calibration misses beyond Item K's RF_18 fix. Several exact-quote anchors confirmed below.**
+
+### Item 7 — Bond Series 2026 Parameter Order
+
+Verified exact-text evidence for three flags in the fixture:
+
+- **RF_03 RED_FLAG** (restructuring framed as savings) — Page 89: *"WHEREAS, the Board has taken into account the negative aspects of issuing the Bonds and the restructuring and refunding of the Refunded Obligations at a loss"*. The order itself admits this is a loss; the savings framing on the cover sheet cannot override the WHEREAS language. This is the load-bearing evidence quote for RF_03.
+- **RF_24 WATCH** (repeated delegation without multi-year strategy, blocked on v2) — Page 87 BLUF: *"This is the same action we took last year in May in the event we may need to refund/restructure our bond payments. Last year's Order expires at the end of April, so we are simply renewing this one-year order"*. Exact confirmation of the annual-cycle pattern.
+- **RF_27 WATCH** (CAB authorization, blocked on v2) — Page 91 §3(c): *"The Bonds may be issued in one or more series as Current Interest Bonds or Capital Appreciation Bonds, or a combination thereof, as set forth in the Pricing Certificate"*. Exact authorization language with §3(d) specifying Compounded Amount treatment.
+- **RF_02 WATCH** (delegation with partial oversight) — Page 91: *"The delegation made hereby shall expire if not exercised by the Pricing Officer on or prior to the one year anniversary of the date of adoption of this Order"* → time window confirmed. Dollar ceiling is in Section 3's guardrails (referenced in the hand version). No report-back clause visible in §3. Two of three oversight elements present → RF_02 WATCH (not RED_FLAG) per the 2026-04-22 softening calibration.
+
+**RF_25 disqualifier correctly applied.** Page 87 cover sheet lists "Prior Discussion Date: No Discussion" but the BLUF immediately says "same action we took last year in May" — the BLUF's renewal reference satisfies the RF_25 disqualifier ("routine renewal of an existing program"). RF_25 correctly suppressed on Item 7. Different from Item 9 below, where the BLUF confirms a genuinely new program entry.
+
+### Item 6 — Balanced Scorecard
+
+Verified tabular evidence for RF_19 emissions:
+
+- **RF_19 RED_FLAG** (BHS Algebra I, wrong-direction override) — Page 75 Interim table: Algebra I Meets dropped from 66.35% BOY to 55% MOY. Annual goal 54% (the Meets target); Predicted Growth goal 85. The Meets drop of 11 points is a wrong-direction trajectory within the STAAR window; my wrong-direction override escalates WATCH → RED_FLAG. Confirmed.
+- **Page 73 BHS scorecard** explicitly labels a "KEY STRATEGIC ACTIONS: 'HOW?'" column for actions 1.1.1 and 1.1.2. RF_10 (key strategic actions for Board approval) does NOT fire because this is a presentation/discussion item, not an action/adoption vote. P16 reverse-direction does NOT fire because the cover sheet (page 69) documents prior discussion on October 20, 2025 and March 9, 2026 — the goals have Board adoption history. Both non-fires match the hand version.
+
+### Item 9 — TIA Payouts
+
+Verified Item 9 vs Item 7 divergence on RF_25:
+
+- Page 131 cover sheet confirms: *"Prior Discussion Date: None"*. BLUF: *"As we prepare to enter the Teacher Incentive Allotment (TIA) program, the Board must approve Brock ISD to pay designated teachers under the TIA"*. This is a genuine new-program commitment, not a renewal. RF_25 WATCH (blocked on v2) correctly fires.
+- **P11 WATCH** (agenda placement mismatch) confirmed by page 131 header showing "Consent Agenda Action Item" while the posted agenda on page 2 places it under Business Action J.3. The same item is documented two different ways.
+
+### Bottom line on the actual-PDF verification pass
+
+Of the 22 flags in the fixture that are emittable under current taxonomy, all are consistent with the actual PDF text. Of the 11 flags blocked on v2, three now carry exact evidence quotes from the PDF (RF_24, RF_27, RF_25 on Item 9) — those quotes will strengthen Toby's review of `gaps_for_v2.md`.
+
+Only RF_18 required a severity correction (WATCH → RED_FLAG prospective), shipped in the previous commit.
+
+---
+
 ## Template for future entries
 
 ```

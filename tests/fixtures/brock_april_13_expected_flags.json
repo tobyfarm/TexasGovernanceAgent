@@ -18,7 +18,9 @@
           "severity": "WATCH",
           "summary": "Closed-session posted under blanket §§551.071–551.087 range — presiding officer should state specifics on the record before entering.",
           "citations": ["TGC §551.101", "TGC §551.102"],
-          "cross_fires_with": ["P04", "P11"]
+          "cross_fires_with": ["P04", "P11"],
+          "evidence_quote": "K. CLOSED SESSION, PURSUANT TO TEXAS GOVERNMENT CODE, SECTIONS 551.071 THROUGH 551.087",
+          "location_in_item": "agenda page 2"
         },
         {
           "pattern_id": "P11",
@@ -255,7 +257,9 @@
           "severity": "RED_FLAG",
           "summary": "This is a debt RESTRUCTURING, not a savings refunding. Samco analysis shows zero debt service savings; total hold-harmless cost is $32.2M; total net debt service is $164.4M.",
           "citations": ["TEC §45.001", "MSRB G-17", "MSRB G-42"],
-          "cross_fires_with": ["P13"]
+          "cross_fires_with": ["P13"],
+          "evidence_quote": "WHEREAS, the Board has taken into account the negative aspects of issuing the Bonds and the restructuring and refunding of the Refunded Obligations at a loss",
+          "location_in_item": "parameter order, page 89 WHEREAS clause"
         },
         {
           "pattern_id": "RF_02",
@@ -284,7 +288,9 @@
           "severity": "WATCH",
           "summary": "Same annual parameter order authorized last May; recurring annual refunding authorizations suggest structural mismatch between debt service costs and the $0.50 I&S rate.",
           "citations": ["TGC §1371.053"],
-          "blocked_on": "v2"
+          "blocked_on": "v2",
+          "evidence_quote": "This is the same action we took last year in May in the event we may need to refund/restructure our bond payments. Last year's Order expires at the end of April, so we are simply renewing this one-year order in the event we need to refund/restructure.",
+          "location_in_item": "cover sheet BLUF, page 87"
         },
         {
           "pattern_id": "RF_27",
@@ -292,7 +298,9 @@
           "summary": "Parameter Order §3(c) authorizes Capital Appreciation Bonds; total compounded cost is not disclosed.",
           "citations": ["TGC Ch. 1207"],
           "blocked_on": "v2",
-          "_note": "Secondary gap in gaps_for_v2.md — CABs"
+          "_note": "Secondary gap in gaps_for_v2.md — CABs",
+          "evidence_quote": "The Bonds may be issued in one or more series as Current Interest Bonds or Capital Appreciation Bonds, or a combination thereof, as set forth in the Pricing Certificate.",
+          "location_in_item": "parameter order §3(c), page 91"
         },
         {
           "pattern_id": "RF_04",
@@ -355,7 +363,9 @@
           "severity": "WATCH",
           "summary": "First-time material commitment (entering TIA program) placed on action agenda with 'Prior Discussion Date: None' — suggests pulling from any consent grouping for fuller discussion.",
           "citations": ["TEC §21.3521"],
-          "blocked_on": "v2"
+          "blocked_on": "v2",
+          "evidence_quote": "Prior Discussion Date: None ... As we prepare to enter the Teacher Incentive Allotment (TIA) program, the Board must approve Brock ISD to pay designated teachers under the TIA.",
+          "location_in_item": "cover sheet + BLUF, page 131"
         }
       ],
       "expected_questions_min": 3,
