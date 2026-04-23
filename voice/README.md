@@ -55,7 +55,15 @@ Client → bridge:
 
 | `type`        | payload                                              | meaning                                         |
 | ------------- | ---------------------------------------------------- | ----------------------------------------------- |
-| (init)        | `{document_id, modality, resume_handle?, welcome?}`  | First message. `modality` is `TEXT` or `AUDIO`. |
+| (init)        | `{document_id, modality, resume_handle?, welcome?}`  | First message. Use `AUDIO` for the demo model.  |
+
+> **Modality note.** `gemini-3.1-flash-live-preview` is audio-first — it
+> does not respond to TEXT-only sessions (the server returns a 1011
+> internal error on `send_realtime_input(text=…)` when the configured
+> response modality is TEXT). Always open with `modality: "AUDIO"` and
+> read replies off the `transcript` frames plus the binary PCM stream.
+> TEXT mode in the bridge is kept for future-compat with TEXT-capable
+> live models.
 | `text`        | `{type:"text", text:"…"}`                            | Typed user input.                               |
 | `audio_end`   | `{type:"audio_end"}`                                 | Push-to-talk release — commits the audio turn.  |
 

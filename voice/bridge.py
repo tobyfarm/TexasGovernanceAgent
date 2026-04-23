@@ -150,6 +150,24 @@ async def _gemini_to_browser(ws: ServerConnection, session) -> None:
             if sc.turn_complete:
                 await ws.send(json.dumps({"type": "turn_complete"}))
 
+        # Surface prompt-level safety feedback so callers can see why an
+        # empty response came back (blocked_reason, safety_ratings, etc.).
+        if getattr(response, "prompt_feedback", None):
+            pf = response.prompt_feedback
+            log.warning("prompt_feedback: %s", pf)
+            await ws.send(
+                json.dumps(
+                    {
+                        "type": "prompt_feedback",
+                        "block_reason": getattr(pf, "block_reason", None)
+                        and str(pf.block_reason),
+                        "block_reason_message": getattr(
+                            pf, "block_reason_message", None
+                        ),
+                    }
+                )
+            )
+
         # Session lifecycle events: forward so the client can reconnect
         # gracefully before Gemini closes the underlying socket.
         if response.go_away is not None:
@@ -210,12 +228,12 @@ async def handle_session(ws: ServerConnection) -> None:
 
             # Optional priming turn: the client can ask the model to speak
             # first, e.g. to greet the trustee and offer a starting prompt.
+            # gemini-3.1-flash-live-preview only triggers a model turn from
+            # send_realtime_input; send_client_content(turn_complete=True)
+            # is for seeding, not for eliciting a reply on this variant.
             welcome = init.get("welcome")
             if welcome and not resume_handle:
-                await session.send_client_content(
-                    turns=[{"role": "user", "parts": [{"text": str(welcome)}]}],
-                    turn_complete=True,
-                )
+                await session.send_realtime_input(text=str(welcome))
 
             await ws.send(json.dumps({"type": "ready", "resumed": bool(resume_handle)}))
 
