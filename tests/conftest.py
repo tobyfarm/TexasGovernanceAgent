@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import pytest
@@ -11,13 +12,19 @@ from api import server as server_mod
 
 
 @pytest.fixture(autouse=True)
-def _api_key(monkeypatch: pytest.MonkeyPatch):
-    """Guarantee ANTHROPIC_API_KEY is set and BROCK_API_KEY is not.
+def _api_key(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest):
+    """Guarantee ANTHROPIC_API_KEY is set and BROCK_API_KEY is not for unit tests.
 
-    Individual tests can override by re-setting or deleting these within the
-    test body — monkeypatch reverts automatically at teardown.
+    The Brock integration test (`tests/test_brock_april_13.py`) runs against
+    the live Agent SDK when both the PDF and a real API key are present — we
+    must not clobber the real key in that file. Everywhere else, a test-key
+    stub is fine because the SDK is monkeypatched out.
     """
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    if "test_brock_april_13" not in request.node.nodeid:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    elif not os.getenv("ANTHROPIC_API_KEY"):
+        # Keep the env empty so the integration test's skipif triggers cleanly.
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("BROCK_API_KEY", raising=False)
     yield
 
