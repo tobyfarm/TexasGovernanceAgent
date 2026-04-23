@@ -491,12 +491,45 @@ async def analyze_pdf(
 # ---------------------------------------------------------------------------
 
 
-def _render_markdown(result: AnalysisResult) -> str:
+Verbosity = Literal["full", "standard", "brief"]
+
+
+def _has_red_or_watch(a: ItemAnalysis) -> bool:
+    return any(f.severity in ("RED_FLAG", "WATCH") for f in a.flags)
+
+
+def _item_has_substance(a: ItemAnalysis, *, tier: str) -> bool:
+    """Does this item warrant inclusion at this verbosity tier?
+
+    - `standard` drops items that are procedural AND carry no RED/WATCH flag.
+      POSITIVE-only flags don't count — the agent applies POSITIVE routinely
+      to any clean procedural opening, so they're not a substance signal.
+    - `brief` only keeps items that are either ACTION/CLOSED_SESSION OR carry
+      a RED_FLAG — matching the hand version's selective coverage.
+    """
+    if tier == "brief":
+        if a.item.item_type in ("ACTION", "CLOSED_SESSION"):
+            return True
+        return any(f.severity == "RED_FLAG" for f in a.flags)
+    # standard
+    if a.item.item_type in ("ACTION", "CLOSED_SESSION", "CONSENT"):
+        return True
+    return _has_red_or_watch(a)
+
+
+def _render_markdown(result: AnalysisResult, *, verbosity: Verbosity = "full") -> str:
     """Day-2 renderer. Agent F's output-formatter Skill authors the final
     templates; until that ships end-to-end, emit a structure that mirrors the
-    hand version's header hierarchy (# Executive Summary / # Item X / ## What
-    Is Happening / ## What the Law Says / ## Governance Questions) so the
-    eval comparator picks up a real header overlap score."""
+    hand version's header hierarchy.
+
+    Verbosity tiers:
+      full      — every item in full (What Is Happening / Key Data / Legal
+                  Framework / Flags / Governance Questions). Default.
+      standard  — procedural items with no flags are collapsed to a single
+                  summary line.
+      brief     — only items with flags or of type ACTION/CLOSED_SESSION
+                  get a deep-dive; others are suppressed entirely.
+    """
     lines: list[str] = []
     lines.append(f"# Pre-Read — {result.meeting_metadata.get('source', result.source_pdf)}")
     lines.append("")
@@ -512,12 +545,20 @@ def _render_markdown(result: AnalysisResult) -> str:
         )
     lines.append("")
     for a in result.items:
-        # Letter-only items get H1 ("# Item J: BUSINESS ACTION"); sub-items
-        # get H2 ("## Item J.1: Series 2016 Bond Refunding") so the eval's
-        # structural comparison against the hand format sees nested headers.
+        if verbosity == "brief" and not _item_has_substance(a, tier="brief"):
+            continue
+        # Letter-only items get H1; sub-items get H2 so nested structure is
+        # visible in the hand-version header comparison.
         header = "##" if "." in a.item.item_id else "#"
         lines.append(f"{header} Item {a.item.item_id}: {a.item.title}")
         lines.append("")
+
+        if verbosity == "standard" and not _item_has_substance(a, tier="standard"):
+            # One-line summary for procedural no-flag items.
+            lines.append(a.summary or "_(procedural — no action taken)_")
+            lines.append("")
+            continue
+
         lines.append("## What Is Happening")
         lines.append("")
         lines.append(a.summary or "_(none)_")
@@ -544,8 +585,6 @@ def _render_markdown(result: AnalysisResult) -> str:
             lines.append("## Governance Questions")
             lines.append("")
             for i, q in enumerate(a.questions, 1):
-                # Strip any leading "N." or "N)" the model may have prefixed
-                # so we don't emit "1. 1. …".
                 clean = re.sub(r"^\s*\d+\s*[.)]\s*", "", q)
                 lines.append(f"{i}. {clean}")
             lines.append("")
@@ -629,6 +668,16 @@ def main(argv: list[str] | None = None) -> int:
         default="BROCK_FULL",
         help="Output mode (default: BROCK_FULL).",
     )
+    parser.add_argument(
+        "--verbosity",
+        choices=["full", "standard", "brief"],
+        default="full",
+        help=(
+            "Rendering verbosity: full = every item (default); "
+            "standard = procedural no-flag items collapsed to one line; "
+            "brief = only items with flags or ACTION/CLOSED_SESSION shown."
+        ),
+    )
     args = parser.parse_args(argv)
 
     if not args.pdf.exists():
@@ -640,7 +689,7 @@ def main(argv: list[str] | None = None) -> int:
         return exit_code or 1
 
     out_md = args.output or args.pdf.with_name(args.pdf.stem + "_output.md")
-    out_md.write_text(_render_markdown(result))
+    out_md.write_text(_render_markdown(result, verbosity=args.verbosity))
     out_json = out_md.with_suffix(".json")
     out_json.write_text(result.model_dump_json(indent=2))
 
