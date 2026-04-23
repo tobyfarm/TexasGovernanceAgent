@@ -71,12 +71,45 @@ _SUBITEM_RE = re.compile(
     re.MULTILINE,
 )
 
+# Keyword → type, evaluated in order (first match wins). Applied to the
+# item's title in preference to its raw_text because bodies frequently contain
+# stray verbs like "approve" that would otherwise mislabel every item ACTION.
 _TYPE_KEYWORDS: list[tuple[ItemType, tuple[str, ...]]] = [
     ("CLOSED_SESSION", ("closed session", "executive session", "§551.071", "§551.072", "§551.074")),
     ("CONSENT", ("consent agenda", "consent item")),
-    ("ACTION", ("action item", "motion", "board action", "approve", "adopt", "authorize")),
-    ("INFORMATIONAL", ("informational", "for information only", "report")),
-    ("DISCUSSION", ("discussion", "presentation", "update")),
+    (
+        "ACTION",
+        (
+            "consider approval",
+            "consider adoption",
+            "consider and adopt",
+            "discuss and consider",
+            "authorize",
+            "ratify",
+            "approve minutes",
+            "business action",
+            "action on",
+        ),
+    ),
+    ("INFORMATIONAL", ("informational", "for information only")),
+    (
+        "DISCUSSION",
+        (
+            "call to order",
+            "invocation",
+            "pledge of allegiance",
+            "establish quorum",
+            "spotlight",
+            "public comment",
+            "superintendent report",
+            "update on",
+            "business discussion",
+            "presentation",
+            "workshop",
+            "reconvene",
+            "adjourn",
+        ),
+    ),
 ]
 
 
@@ -112,11 +145,23 @@ def extract_pages(pdf_path: Path) -> list[str]:
     return pages
 
 
-def _classify_item(text: str) -> ItemType:
-    lower = text.lower()
+def _classify_item(title: str, raw_text: str = "") -> ItemType:
+    """Classify an agenda item by its title first, falling back to raw_text.
+
+    Titles are short and intentional — "Consider approval of teacher contracts"
+    is unambiguously ACTION. Bodies contain stray verbs that mislead the
+    classifier, so we only consult raw_text when the title has no keyword
+    match and the raw_text contains a strong closed-session signal."""
+    title_lower = title.lower()
     for item_type, keywords in _TYPE_KEYWORDS:
-        if any(kw in lower for kw in keywords):
+        if any(kw in title_lower for kw in keywords):
             return item_type
+    # Closed-session statute references sometimes appear only in body text.
+    if raw_text:
+        body_lower = raw_text.lower()
+        for kw in ("§551.071", "§551.072", "§551.074", "executive session"):
+            if kw in body_lower:
+                return "CLOSED_SESSION"
     return "DISCUSSION"
 
 
@@ -365,7 +410,7 @@ def extract_agenda_items(
                     title=title,
                     pages=(start, end),
                     raw_text=raw,
-                    item_type=_classify_item(raw),
+                    item_type=_classify_item(title, raw),
                 )
             )
         return items
@@ -393,7 +438,7 @@ def extract_agenda_items(
                 title=title[:200],
                 pages=(start, end),
                 raw_text=raw,
-                item_type=_classify_item(raw),
+                item_type=_classify_item(title, raw),
             )
         )
     return items

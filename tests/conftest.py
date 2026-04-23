@@ -50,9 +50,18 @@ def audit_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return target
 
 
-@pytest.fixture
-def runs_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Redirect the run artifacts directory to a per-test temp path."""
+@pytest.fixture(autouse=True)
+def runs_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> Path:
+    """Redirect the run artifacts directory to a per-test temp path.
+
+    Autouse so no unit test accidentally persists into the real
+    `logs/runs/` directory. The Brock integration test is exempted — it
+    exercises the full live pipeline and its artifacts are useful to keep."""
+    if "test_brock_april_13" in request.node.nodeid:
+        # Integration test writes to real logs/runs/ — preserve that behavior.
+        return run_mod.RUNS_DIR
     target = tmp_path / "runs"
     monkeypatch.setattr(run_mod, "RUNS_DIR", target)
     monkeypatch.setattr(server_mod, "RUNS_DIR", target)
