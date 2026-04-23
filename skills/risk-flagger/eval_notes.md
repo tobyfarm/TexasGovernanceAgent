@@ -261,6 +261,33 @@ Only RF_18 required a severity correction (WATCH → RED_FLAG prospective), ship
 
 ---
 
+## 2026-04-23 · Major calibration tightening — RF_01 through RF_20 + POSITIVE
+
+**Trigger.** Agent A's first full live pipeline run on the Brock April 13 PDF emitted **51 RED / 104 WATCH / 45 POSITIVE = 200 flags** versus the hand version's **14 RED / 20 WATCH / 7 POSITIVE = 41 flags**. That is 3.6x over on RED, 5.2x over on WATCH, 6.4x over on POSITIVE — unusable as a pre-read.
+
+**Root cause.** SKILL.md trigger conditions were stated as category matches ("Fires on: tariff clause") and suppressors were narrowly scoped. Claude interpreted "could apply" as "should apply" and fired on surface keywords.
+
+**Fix shipped (this commit).** Rewrote `skills/risk-flagger/SKILL.md` end to end:
+
+1. **Restraint preamble.** New "Calibration discipline — read this first" section at the top explicitly states the target ratio (~3-4 flags per item; most routine items produce zero), lists the over-firing patterns to avoid, and states silence as the default. This sets expectations before the LLM reads any pattern.
+2. **Required evidence as checklists.** Each RF's "Fires on" single sentence was replaced with a bulleted "Required evidence (all must be present)" list. Every bullet must be directly supported by specific text in the packet. If any bullet cannot be quoted from the item, the flag does not fire.
+3. **Suppressors added everywhere.** Every RF now has an explicit "Suppressors" list — conditions under which the flag does NOT fire even if one Required evidence bullet matches. Suppressors are broader than the previous "Disqualifier" field and cover the common routine cases that were false-firing.
+4. **Materiality thresholds quantified.** RF_02 requires transaction ≥$100K capital or ≥$50K/yr multi-year. RF_06 requires exposure >$25K OR 10% of cost AND time pressure. RF_07 requires account drawn below 10% of annual budget. RF_09 requires coverage <90% AND decision-critical. RF_19 requires gap ≥5 points (≥15 for wrong-direction RED_FLAG). RF_20 requires within 10% of depletion.
+5. **POSITIVE catalog tightened hard.** PF_B capped at 2 per agenda. PF_A requires grant ≥25% of cost. PF_C requires ≥10-point improvement or goal-hit. PF_D requires ≥30 days ahead of statutory deadline OR voluntary standard. PF_E requires a before/after improvement on the same topic from a prior meeting.
+6. **RF_10 scorecard-actions disambiguation.** Explicit suppressor added for "discussion/presentation of a scorecard that shows a Key Strategic Actions column labeled as administration's How?" — this was firing on every scorecard presentation; now suppressed unless the Board is actively being asked to approve the actions.
+7. **RF_14 materials-not-in-packet narrowed.** Required "decision-critical" test: only fires when the missing document is the text being voted on, not for any reference to external material.
+8. **RF_15 cost-missing narrowed.** Fires only when total cost is NOT anywhere in the posted materials (not just the cover sheet).
+9. **RF_18 prospective mode dedup.** Explicit "emit at most once per closed-session item" directive to prevent per-subsection emission.
+10. **Severity overrides re-stated** with the tightened defaults in mind.
+
+**Expected result.** Pipeline output on Brock April 13 should drop from ~200 flags to ~40–50 (matching hand version's 41). Will require Agent A to re-run to confirm.
+
+**Citation update.** RF_03 citations list now includes TEC §45.004 (refunding bonds specifically), not just §45.001. Fixture updated.
+
+**Agent B coordination.** Wrote `skills/risk-flagger/agent_b_coordination.md` documenting the specific additional statutes Agent B's corpus needs: TEC §45.004, §45.051–§45.063 (PSF guarantee subchapter), §44.031(a)/(a)(4)/(a)(5)/(j), plus the previously-surfaced items from the corpus-gap audit.
+
+---
+
 ## 2026-04-23 · Item 5 (Budget Workshop) verification against actual PDF
 
 **Items 5 verified against the PDF text.** All six fixture flags (RF_23, RF_15, RF_21, PF_C, RF_22, RF_26) are consistent with the extracted slide text. No severity drift, no missed signals, no spurious emissions. Evidence quotes added to the fixture for RF_23, RF_21, and RF_26.

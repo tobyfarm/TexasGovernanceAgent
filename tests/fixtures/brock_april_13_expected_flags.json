@@ -262,7 +262,7 @@
           "pattern_id": "RF_03",
           "severity": "RED_FLAG",
           "summary": "This is a debt RESTRUCTURING, not a savings refunding. Samco analysis shows zero debt service savings; total hold-harmless cost is $32.2M; total net debt service is $164.4M.",
-          "citations": ["TEC §45.001", "MSRB G-17", "MSRB G-42"],
+          "citations": ["TEC §45.004", "TEC §45.001", "MSRB G-17", "MSRB G-42"],
           "cross_fires_with": ["P13"],
           "evidence_quote": "WHEREAS, the Board has taken into account the negative aspects of issuing the Bonds and the restructuring and refunding of the Refunded Obligations at a loss",
           "location_in_item": "parameter order, page 89 WHEREAS clause"
@@ -421,7 +421,7 @@
           "pattern_id": "RF_06",
           "severity": "WATCH",
           "summary": "Blue Bird tariff surcharge language and Rush 'subject to adjustment' clause; quote expires 5/1/2026.",
-          "citations": ["TEC §44.031"]
+          "citations": ["TEC §44.031(a)", "TEC §44.031(a)(4)", "TEC §44.031(j)"]
         },
         {
           "pattern_id": "PF_A",
