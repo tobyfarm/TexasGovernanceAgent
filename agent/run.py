@@ -141,15 +141,33 @@ class AnalysisError(Exception):
 # ---------------------------------------------------------------------------
 
 
+_PROMPT_BUDGET_CHARS = 20000
+_PROMPT_HEAD_RATIO = 0.7  # 70% of budget to item start, 30% to item end
+
+
+def _truncate_for_prompt(text: str, *, budget: int = _PROMPT_BUDGET_CHARS) -> str:
+    """Keep the head and tail of a long item body. Mid-content gets elided.
+    Item detail packets typically have the key action at the start (motion
+    text, contract terms) and supporting exhibits at the end (signatures,
+    appendix); the middle is repetitive tables and boilerplate."""
+    if len(text) <= budget:
+        return text
+    head_chars = int(budget * _PROMPT_HEAD_RATIO)
+    tail_chars = budget - head_chars - 80  # room for elision marker
+    head = text[:head_chars]
+    tail = text[-tail_chars:] if tail_chars > 0 else ""
+    return f"{head}\n\n[… {len(text) - head_chars - tail_chars} chars elided …]\n\n{tail}"
+
+
 def _user_prompt(item: AgendaItem) -> str:
-    truncated = item.raw_text[:20000]
+    body = _truncate_for_prompt(item.raw_text)
     return (
         f"Analyze this agenda item.\n\n"
         f"item_id: {item.item_id}\n"
         f"title: {item.title}\n"
         f"pages: {item.pages[0]}-{item.pages[1]}\n"
         f"type: {item.item_type}\n\n"
-        f"raw_text:\n{truncated}\n"
+        f"raw_text:\n{body}\n"
     )
 
 
