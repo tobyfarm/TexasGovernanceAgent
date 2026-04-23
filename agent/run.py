@@ -5,12 +5,14 @@ ItemAnalysis grounded in the four repo Skills (statute-mapper, governance-
 principles, risk-flagger, output-formatter). Collect outputs and emit a final
 AnalysisResult as JSON + a Brock-format markdown pre-read.
 
-Day 1: rough end-to-end. Output quality is poor — that is expected.
-Day 2: stabilize streaming, parallelism, citation logging.
+Two entry points:
+    analyze_pdf()         — returns a final AnalysisResult (blocking).
+    analyze_pdf_stream()  — async generator yielding AnalyzeEvent objects for
+                            SSE-backed UIs.
 
-Skills live in `./skills/` at the repo root per CLAUDE.md. The SDK's default
-skill-loading path is `.claude/skills/`; until that is reconciled (Day 2), the
-system prompt explicitly points the agent at the repo-root location.
+Per-item calls run under a bounded semaphore (default 4 concurrent). Skills
+auto-load from `.claude/skills`, which is a symlink to the repo-root `skills/`
+directory.
 """
 
 from __future__ import annotations
@@ -19,13 +21,19 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import re
 import sys
+import uuid
+from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 from dotenv import load_dotenv
 
+from agent.audit import log_citations
 from agent.ingestion import extract_agenda_items
 from agent.types import (
     AgendaItem,
@@ -39,6 +47,7 @@ logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
+DEFAULT_CONCURRENCY = 4
 
 SYSTEM_PROMPT = """You are the Board Book Red Team lead agent for a Texas school board trustee.
 
@@ -57,9 +66,6 @@ Preserve the voice patterns from skills/governance-principles/principles.md §IV
 - No corporate filler. No stacked em-dash qualifiers.
 - Warm only on students.
 
-Skills are stored in the repo at `./skills/` (not `.claude/skills/`). Read them
-directly from disk if they have not been auto-loaded as tools.
-
 Return *only* a JSON object with this shape:
 {
   "summary": "one-paragraph What Is Happening",
@@ -71,6 +77,36 @@ Return *only* a JSON object with this shape:
 }
 No prose before or after the JSON.
 """
+
+
+# ---------------------------------------------------------------------------
+# Streaming events — shape consumed by the FastAPI SSE endpoint and CLI.
+# ---------------------------------------------------------------------------
+
+
+EventName = Literal["ingest_done", "item_start", "item_done", "item_error", "result_done", "error"]
+
+
+@dataclass
+class AnalyzeEvent:
+    name: EventName
+    data: dict = field(default_factory=dict)
+
+    def to_sse_payload(self) -> dict:
+        return {"event": self.name, "data": json.dumps(self.data, default=str)}
+
+
+class AnalysisError(Exception):
+    """Raised for user-facing failure modes (missing key, malformed PDF)."""
+
+    def __init__(self, message: str, *, code: str):
+        super().__init__(message)
+        self.code = code
+
+
+# ---------------------------------------------------------------------------
+# Model invocation
+# ---------------------------------------------------------------------------
 
 
 def _user_prompt(item: AgendaItem) -> str:
@@ -97,12 +133,11 @@ def _extract_json(text: str) -> dict:
     return json.loads(text[start : end + 1])
 
 
-async def _run_item(item: AgendaItem, *, cwd: Path) -> ItemAnalysis:
-    """Call the Agent SDK once per item; collect the assistant's final text."""
+async def _invoke_agent(prompt: str, *, cwd: Path) -> str:
+    """Drive one Agent SDK query turn and return the concatenated assistant text."""
     from claude_agent_sdk import (
         AssistantMessage,
         ClaudeAgentOptions,
-        ResultMessage,
         TextBlock,
         query,
     )
@@ -113,17 +148,27 @@ async def _run_item(item: AgendaItem, *, cwd: Path) -> ItemAnalysis:
         setting_sources=["project"],
     )
 
-    final_text_parts: list[str] = []
-    async for message in query(prompt=_user_prompt(item), options=options):
+    parts: list[str] = []
+    async for message in query(prompt=prompt, options=options):
         if isinstance(message, AssistantMessage):
             for block in message.content:
                 if isinstance(block, TextBlock):
-                    final_text_parts.append(block.text)
-        elif isinstance(message, ResultMessage):
-            # Includes final usage + stop reason; nothing we need to capture here.
-            pass
+                    parts.append(block.text)
+    return "\n".join(parts)
 
-    text = "\n".join(final_text_parts)
+
+# Test seam: tests can monkeypatch this to avoid hitting the SDK.
+_invoke = _invoke_agent
+
+
+async def _run_item(
+    item: AgendaItem,
+    *,
+    cwd: Path,
+    run_id: str,
+    source_pdf: str,
+) -> ItemAnalysis:
+    text = await _invoke(_user_prompt(item), cwd=cwd)
 
     try:
         parsed = _extract_json(text)
@@ -138,13 +183,12 @@ async def _run_item(item: AgendaItem, *, cwd: Path) -> ItemAnalysis:
 
     flags = [Flag(**f) for f in parsed.get("flags", [])]
     citations = [Citation(**c) for c in parsed.get("citations", [])]
-    for c in citations:
-        logger.info(
-            "citation emitted: item=%s authority=%s verified=%s",
-            item.item_id,
-            c.authority,
-            c.verified,
-        )
+    log_citations(
+        run_id=run_id,
+        source_pdf=source_pdf,
+        item_id=item.item_id,
+        citations=citations,
+    )
 
     return ItemAnalysis(
         item=item,
@@ -157,37 +201,9 @@ async def _run_item(item: AgendaItem, *, cwd: Path) -> ItemAnalysis:
     )
 
 
-async def analyze_pdf(pdf_path: Path, *, manual_split: Path | None = None) -> AnalysisResult:
-    items = extract_agenda_items(pdf_path, manual_split=manual_split)
-    logger.info("ingested %d agenda items from %s", len(items), pdf_path)
-
-    # Day 1: sequential. Day 2: asyncio.gather with a concurrency cap.
-    analyses: list[ItemAnalysis] = []
-    for item in items:
-        logger.info("analyzing item %s (%s)", item.item_id, item.item_type)
-        analysis = await _run_item(item, cwd=REPO_ROOT)
-        analyses.append(analysis)
-
-    exec_summary = [
-        {
-            "item_id": a.item.item_id,
-            "title": a.item.title,
-            "type": a.item.item_type,
-            "pages": f"{a.item.pages[0]}-{a.item.pages[1]}",
-            "risk": _highest_severity(a.flags),
-        }
-        for a in analyses
-    ]
-
-    return AnalysisResult(
-        source_pdf=str(pdf_path),
-        generated_at=datetime.now(UTC),
-        meeting_metadata={"source": pdf_path.name},
-        executive_summary_table=exec_summary,
-        items=analyses,
-        prep_checklist=[],
-        output_mode="BROCK_FULL",
-    )
+# ---------------------------------------------------------------------------
+# Orchestration
+# ---------------------------------------------------------------------------
 
 
 def _highest_severity(flags: list[Flag]) -> str:
@@ -195,6 +211,150 @@ def _highest_severity(flags: list[Flag]) -> str:
     if not flags:
         return "NONE"
     return max(flags, key=lambda f: order.get(f.severity, 0)).severity
+
+
+def _exec_summary_row(a: ItemAnalysis) -> dict:
+    return {
+        "item_id": a.item.item_id,
+        "title": a.item.title,
+        "type": a.item.item_type,
+        "pages": f"{a.item.pages[0]}-{a.item.pages[1]}",
+        "risk": _highest_severity(a.flags),
+    }
+
+
+def _placeholder_analysis(item: AgendaItem, error: str) -> ItemAnalysis:
+    return ItemAnalysis(
+        item=item,
+        summary=f"(analysis failed: {error})",
+        key_data="",
+        legal_framework="",
+    )
+
+
+def _check_api_key() -> None:
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        raise AnalysisError(
+            "ANTHROPIC_API_KEY is not set; the lead agent cannot run.",
+            code="missing_api_key",
+        )
+
+
+async def analyze_pdf_stream(
+    pdf_path: Path,
+    *,
+    manual_split: Path | None = None,
+    concurrency: int | None = None,
+) -> AsyncIterator[AnalyzeEvent]:
+    """Drive the full pipeline, yielding AnalyzeEvent objects.
+
+    Raises AnalysisError for up-front failures (missing API key, malformed PDF).
+    Per-item failures are surfaced as `item_error` events and the corresponding
+    ItemAnalysis is a placeholder so the downstream contract stays intact.
+    """
+    _check_api_key()
+
+    try:
+        items = extract_agenda_items(pdf_path, manual_split=manual_split)
+    except FileNotFoundError:
+        raise
+    except Exception as exc:
+        logger.exception("ingestion failed on %s", pdf_path)
+        raise AnalysisError(f"failed to parse PDF: {exc}", code="ingestion_failed") from exc
+
+    run_id = uuid.uuid4().hex[:12]
+    source_pdf = str(pdf_path)
+
+    yield AnalyzeEvent(
+        "ingest_done",
+        {"run_id": run_id, "item_count": len(items), "source_pdf": source_pdf},
+    )
+
+    sem = asyncio.Semaphore(concurrency or DEFAULT_CONCURRENCY)
+    # Queue is the fan-in point so items complete in any order but we emit as
+    # they finish. Preserving input order is a post-gather concern.
+    queue: asyncio.Queue[AnalyzeEvent] = asyncio.Queue()
+    results: list[ItemAnalysis | None] = [None] * len(items)
+
+    async def _worker(idx: int, item: AgendaItem) -> None:
+        async with sem:
+            await queue.put(AnalyzeEvent("item_start", {"idx": idx, "item_id": item.item_id}))
+            try:
+                analysis = await _run_item(
+                    item, cwd=REPO_ROOT, run_id=run_id, source_pdf=source_pdf
+                )
+                results[idx] = analysis
+                await queue.put(
+                    AnalyzeEvent(
+                        "item_done",
+                        {
+                            "idx": idx,
+                            "item_id": item.item_id,
+                            "analysis": analysis.model_dump(mode="json"),
+                        },
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 — per-item isolation is intentional
+                logger.exception("item %s failed", item.item_id)
+                results[idx] = _placeholder_analysis(item, str(exc))
+                await queue.put(
+                    AnalyzeEvent(
+                        "item_error",
+                        {"idx": idx, "item_id": item.item_id, "error": str(exc)},
+                    )
+                )
+
+    workers = [asyncio.create_task(_worker(i, it)) for i, it in enumerate(items)]
+
+    async def _drain() -> None:
+        await asyncio.gather(*workers)
+        await queue.put(AnalyzeEvent("__done__"))  # sentinel
+
+    drainer = asyncio.create_task(_drain())
+
+    while True:
+        event = await queue.get()
+        if event.name == "__done__":
+            break
+        yield event
+
+    await drainer  # propagate exceptions from workers
+
+    ordered = [r for r in results if r is not None]
+    final = AnalysisResult(
+        source_pdf=source_pdf,
+        generated_at=datetime.now(UTC),
+        meeting_metadata={"source": Path(pdf_path).name, "run_id": run_id},
+        executive_summary_table=[_exec_summary_row(a) for a in ordered],
+        items=ordered,
+        prep_checklist=[],
+        output_mode="BROCK_FULL",
+    )
+
+    yield AnalyzeEvent("result_done", final.model_dump(mode="json"))
+
+
+async def analyze_pdf(
+    pdf_path: Path,
+    *,
+    manual_split: Path | None = None,
+    concurrency: int | None = None,
+) -> AnalysisResult:
+    """Non-streaming wrapper. Collects stream events and returns the final result."""
+    final: AnalysisResult | None = None
+    async for event in analyze_pdf_stream(
+        pdf_path, manual_split=manual_split, concurrency=concurrency
+    ):
+        if event.name == "result_done":
+            final = AnalysisResult.model_validate(event.data)
+    if final is None:
+        raise AnalysisError("pipeline produced no result_done event", code="no_result")
+    return final
+
+
+# ---------------------------------------------------------------------------
+# Markdown renderer + CLI entry
+# ---------------------------------------------------------------------------
 
 
 def _render_markdown(result: AnalysisResult) -> str:
@@ -265,13 +425,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output", type=Path, default=None, help="Where to write the markdown pre-read."
     )
+    parser.add_argument(
+        "--concurrency",
+        type=int,
+        default=DEFAULT_CONCURRENCY,
+        help=f"Max parallel item analyses (default: {DEFAULT_CONCURRENCY}).",
+    )
     args = parser.parse_args(argv)
 
     if not args.pdf.exists():
         print(f"error: pdf not found: {args.pdf}", file=sys.stderr)
         return 2
 
-    result = asyncio.run(analyze_pdf(args.pdf, manual_split=args.manual_split))
+    try:
+        result = asyncio.run(
+            analyze_pdf(args.pdf, manual_split=args.manual_split, concurrency=args.concurrency)
+        )
+    except AnalysisError as exc:
+        print(f"error ({exc.code}): {exc}", file=sys.stderr)
+        return 1
 
     out_md = args.output or args.pdf.with_name(args.pdf.stem + "_output.md")
     out_md.write_text(_render_markdown(result))

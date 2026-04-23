@@ -53,5 +53,8 @@ examples/*_output.md
 examples/*_output.docx
 *.local.md
 
+# Citation audit log (written per-run; regenerated)
+logs/
+
 # Worktrees — never track the dirs themselves, just the links git manages
 .git/worktrees/
