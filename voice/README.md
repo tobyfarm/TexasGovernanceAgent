@@ -53,9 +53,11 @@ Per connection the bridge:
 
 Client → bridge:
 
-| `type`        | payload                                              | meaning                                         |
-| ------------- | ---------------------------------------------------- | ----------------------------------------------- |
-| (init)        | `{document_id, modality, resume_handle?, welcome?}`  | First message. Use `AUDIO` for the demo model.  |
+| `type`       | payload                                             | meaning                                         |
+| ------------ | --------------------------------------------------- | ----------------------------------------------- |
+| (init)       | `{document_id, modality, resume_handle?, welcome?}` | First message. Use `AUDIO` for the demo model.  |
+| `text`       | `{type:"text", text:"…"}`                           | Typed user input.                               |
+| `audio_end`  | `{type:"audio_end"}`                                | Push-to-talk release — commits the audio turn.  |
 
 > **Modality note.** `gemini-3.1-flash-live-preview` is audio-first — it
 > does not respond to TEXT-only sessions (the server returns a 1011
@@ -64,8 +66,6 @@ Client → bridge:
 > read replies off the `transcript` frames plus the binary PCM stream.
 > TEXT mode in the bridge is kept for future-compat with TEXT-capable
 > live models.
-| `text`        | `{type:"text", text:"…"}`                            | Typed user input.                               |
-| `audio_end`   | `{type:"audio_end"}`                                 | Push-to-talk release — commits the audio turn.  |
 
 Optional init fields:
 
@@ -150,6 +150,72 @@ fastest way to verify Gemini auth and the WebSocket plumbing.
   HTTP/2, etc.) and point the Next.js app at `wss://…`.
 - Never log user audio to disk. The bridge doesn't; keep it that way in
   the hosted deployment.
+
+### Minimal flow to copy
+
+```js
+const ws = new WebSocket(process.env.NEXT_PUBLIC_VOICE_BRIDGE_URL);
+ws.binaryType = "arraybuffer";
+
+let resumeHandle = null;
+let reconnectPending = false;
+
+ws.addEventListener("open", () => {
+  ws.send(JSON.stringify({
+    document_id: "brock_april_13_2026",
+    modality: "AUDIO",                   // 3.1 Flash Live is audio-first
+    resume_handle: resumeHandle || undefined,
+  }));
+});
+
+ws.addEventListener("message", (ev) => {
+  if (typeof ev.data !== "string") {
+    playPcm24kHz(ev.data);                // 24 kHz 16-bit mono
+    return;
+  }
+  const msg = JSON.parse(ev.data);
+  switch (msg.type) {
+    case "ready":                         // start sending input
+    case "transcript":                    // render under audio for a11y
+    case "turn_complete":                 // reset per-turn UI state
+    case "interrupted":                   // user barged in; flush playback
+      break;
+    case "go_away":
+      reconnectPending = true;            // reconnect on the next close
+      break;
+    case "resumption_handle":
+      resumeHandle = msg.handle;          // keep until session end
+      break;
+    case "error":
+      surfaceError(msg.message);
+      break;
+  }
+});
+
+ws.addEventListener("close", () => {
+  if (reconnectPending && resumeHandle) reopen();   // uses resumeHandle
+});
+```
+
+The `client_example/` folder contains a full working version including
+the push-to-talk worklet. Strip its UI chrome and port the mic capture
++ playback queue + this state machine.
+
+## Verifying the stack
+
+From `voice/`:
+
+```bash
+uv run pytest tests/                       # fast unit tests (loader)
+uv run python tests/live_smoke.py          # raw SDK connectivity
+uv run python tests/bridge_smoke.py AUDIO  # bridge subprocess roundtrip
+uv run python tests/audio_relay_smoke.py   # mic PCM → bridge → audio out
+uv run python tests/resumption_smoke.py    # handle round-trip
+uv run python tests/brock_eval_single.py --save-audio  # Day 3 eval gate
+```
+
+All six pass on main. See `tests/README.md` for per-script notes and
+the Brock eval file convention.
 
 ## Files
 

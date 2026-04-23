@@ -173,6 +173,9 @@
       let micStream = null;
       let micOn = false;
       let resumeHandle = null;
+      // Set when the bridge emits go_away so a subsequent close is
+      // auto-reconnected instead of being treated as an error.
+      let reconnectPending = false;
 
       function addLine(role, text) {
         const row = document.createElement("div");
@@ -304,7 +307,11 @@
               setConnected(true);
               break;
             case "go_away":
-              addLine("system", `server will close soon (${msg.time_left || "?"}). reconnect will resume.`);
+              reconnectPending = true;
+              addLine(
+                "system",
+                `server will close soon (${msg.time_left || "?"}). reconnecting will resume.`,
+              );
               break;
             case "resumption_handle":
               resumeHandle = msg.handle;
@@ -344,6 +351,11 @@
           statusEl.textContent = `disconnected (${ev.code})`;
           setConnected(false);
           toggleMic(false);
+          if (reconnectPending && resumeHandle) {
+            reconnectPending = false;
+            addLine("system", "reconnecting with resumption handle…");
+            setTimeout(connect, 300);
+          }
         });
         ws.addEventListener("error", () => {
           statusEl.textContent = "websocket error";
