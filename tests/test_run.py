@@ -9,22 +9,8 @@ from pathlib import Path
 import pytest
 
 from agent import run as run_mod
-from agent.audit import _target_path  # noqa: F401 — referenced indirectly via env override
 from agent.run import AnalysisError, analyze_pdf, analyze_pdf_stream
 from agent.types import AgendaItem, AnalysisResult
-
-
-@pytest.fixture(autouse=True)
-def _set_api_key(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    yield
-
-
-@pytest.fixture
-def audit_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    target = tmp_path / "citations.jsonl"
-    monkeypatch.setenv("CITATION_LOG_PATH", str(target))
-    return target
 
 
 def _fake_items() -> list[AgendaItem]:
@@ -59,7 +45,7 @@ async def _fake_invoke(prompt: str, *, cwd: Path, mode: str = "BROCK_FULL") -> s
 
 
 async def test_stream_emits_ingest_and_result(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path, runs_dir: Path
 ):
     items = _fake_items()
     monkeypatch.setattr(run_mod, "extract_agenda_items", lambda *a, **kw: items)
@@ -81,7 +67,7 @@ async def test_stream_emits_ingest_and_result(
 
 
 async def test_analyze_pdf_returns_final_result(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path, runs_dir: Path
 ):
     items = _fake_items()
     monkeypatch.setattr(run_mod, "extract_agenda_items", lambda *a, **kw: items)
@@ -113,7 +99,7 @@ async def test_ingestion_failure_wrapped(monkeypatch: pytest.MonkeyPatch, tmp_pa
 
 
 async def test_per_item_error_becomes_event(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path, runs_dir: Path
 ):
     items = _fake_items()
     monkeypatch.setattr(run_mod, "extract_agenda_items", lambda *a, **kw: items)
@@ -138,7 +124,7 @@ async def test_per_item_error_becomes_event(
 
 
 async def test_concurrency_is_bounded(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, audit_path: Path, runs_dir: Path
 ):
     items = _fake_items() * 3  # 9 items
     monkeypatch.setattr(run_mod, "extract_agenda_items", lambda *a, **kw: items)

@@ -19,27 +19,6 @@ from agent.types import AgendaItem
 from api import server as server_mod
 
 
-@pytest.fixture(autouse=True)
-def _reset_rate_limiter():
-    server_mod.rate_limiter.reset()
-    yield
-    server_mod.rate_limiter.reset()
-
-
-@pytest.fixture(autouse=True)
-def _api_key(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    monkeypatch.delenv("BROCK_API_KEY", raising=False)
-    yield
-
-
-@pytest.fixture
-def audit_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    target = tmp_path / "citations.jsonl"
-    monkeypatch.setenv("CITATION_LOG_PATH", str(target))
-    return target
-
-
 @pytest.fixture
 def client() -> TestClient:
     return TestClient(server_mod.app)
@@ -108,7 +87,7 @@ def test_analyze_rejects_oversized_upload(client: TestClient, monkeypatch: pytes
 
 
 def test_analyze_streams_sse_events(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch, audit_path: Path
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, audit_path: Path, runs_dir: Path
 ):
     _stub_pipeline(monkeypatch)
     pdf_bytes = b"%PDF-1.4\nfake\n%%EOF"

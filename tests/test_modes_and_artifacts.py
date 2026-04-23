@@ -14,28 +14,6 @@ from agent.types import AgendaItem, AnalysisResult, ItemAnalysis
 from api import server as server_mod
 
 
-@pytest.fixture(autouse=True)
-def _api_key(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    monkeypatch.delenv("BROCK_API_KEY", raising=False)
-    yield
-
-
-@pytest.fixture(autouse=True)
-def _reset_rate_limiter():
-    server_mod.rate_limiter.reset()
-    yield
-    server_mod.rate_limiter.reset()
-
-
-@pytest.fixture
-def runs_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    target = tmp_path / "runs"
-    monkeypatch.setattr(run_mod, "RUNS_DIR", target)
-    monkeypatch.setattr(server_mod, "RUNS_DIR", target)
-    return target
-
-
 def test_system_prompt_switches_on_mode():
     brock = _system_prompt("BROCK_FULL")
     samco = _system_prompt("SAMCO_LOQ")

@@ -15,28 +15,6 @@ from agent import run as run_mod
 from agent.run import _invoke_with_retry
 from api import server as server_mod
 
-
-@pytest.fixture(autouse=True)
-def _api_key(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
-    monkeypatch.delenv("BROCK_API_KEY", raising=False)
-    yield
-
-
-@pytest.fixture(autouse=True)
-def _reset_rate_limiter():
-    server_mod.rate_limiter.reset()
-    yield
-    server_mod.rate_limiter.reset()
-
-
-@pytest.fixture
-def audit_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    target = tmp_path / "citations.jsonl"
-    monkeypatch.setenv("CITATION_LOG_PATH", str(target))
-    return target
-
-
 # ---------------------------------------------------------------------------
 # Retry
 # ---------------------------------------------------------------------------
