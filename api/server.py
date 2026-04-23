@@ -19,10 +19,10 @@ import tempfile
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Header, HTTPException, Request, UploadFile, status
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, status
 from sse_starlette.sse import EventSourceResponse
 
-from agent.run import AnalysisError, analyze_pdf_stream
+from agent.run import RUNS_DIR, AnalysisError, analyze_pdf_stream
 from api.ratelimit import RateLimiter
 
 load_dotenv()
@@ -89,12 +89,18 @@ async def health() -> dict[str, str]:
 async def analyze(
     request: Request,
     pdf: UploadFile = File(...),  # noqa: B008 — FastAPI dependency pattern
+    mode: str = Form(default="BROCK_FULL"),
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
 ) -> EventSourceResponse:
     """Accept a multipart PDF and stream analysis events as Server-Sent Events."""
     _require_api_key(x_api_key)
     _check_rate_limit(request)
 
+    if mode not in ("BROCK_FULL", "SAMCO_LOQ"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"unknown mode: {mode} (expected BROCK_FULL or SAMCO_LOQ)",
+        )
     if pdf.content_type not in _PERMITTED_CONTENT_TYPES:
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -106,7 +112,7 @@ async def analyze(
     async def event_source():
         try:
             try:
-                async for event in analyze_pdf_stream(tmp_path):
+                async for event in analyze_pdf_stream(tmp_path, mode=mode):
                     yield event.to_sse_payload()
             except AnalysisError as exc:
                 logger.warning("analysis error: %s (%s)", exc, exc.code)
@@ -124,3 +130,44 @@ async def analyze(
             tmp_path.unlink(missing_ok=True)
 
     return EventSourceResponse(event_source())
+
+
+@app.get("/runs")
+async def list_runs(
+    limit: int = 50,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    """List persisted runs most-recent first. Reads meta.json from each run dir."""
+    _require_api_key(x_api_key)
+    if not RUNS_DIR.exists():
+        return {"runs": []}
+    dirs = sorted(
+        (d for d in RUNS_DIR.iterdir() if d.is_dir()),
+        key=lambda d: d.stat().st_mtime,
+        reverse=True,
+    )[:limit]
+    runs = []
+    for d in dirs:
+        meta_path = d / "meta.json"
+        if meta_path.exists():
+            try:
+                runs.append(json.loads(meta_path.read_text()))
+            except json.JSONDecodeError:
+                logger.warning("skipping corrupt meta.json at %s", meta_path)
+    return {"runs": runs}
+
+
+@app.get("/runs/{run_id}")
+async def get_run(
+    run_id: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    """Return the stored AnalysisResult for a run."""
+    _require_api_key(x_api_key)
+    # Guard against path traversal — run_id is hex-only in practice.
+    if not run_id.isalnum():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid run_id")
+    result_path = RUNS_DIR / run_id / "result.json"
+    if not result_path.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
+    return json.loads(result_path.read_text())

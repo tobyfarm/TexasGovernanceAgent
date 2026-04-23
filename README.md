@@ -64,6 +64,15 @@ cd web && pnpm install && pnpm dev
 
 The pre-read writes to `examples/brock_april_13_2026_output.md`. Compare it side-by-side with `examples/brock_april_13_2026_prereadhand.md` — that's the acceptance test.
 
+Every run also writes versioned artifacts to `logs/runs/{run_id}/` (`result.json`, `result.md`, `meta.json`) so successive calibration passes are diffable. A coarse comparator is available:
+
+```bash
+uv run python -m eval.compare examples/brock_april_13_2026_output.md \
+                              examples/brock_april_13_2026_prereadhand.md
+```
+
+The CLI supports `--mode SAMCO_LOQ` for the SAMCO-style line of questioning, `--concurrency N` to tune parallel item analysis, and `--manual-split split.yaml` when auto-detected agenda boundaries miss. The API mirrors the same controls: `POST /analyze` accepts a `mode` form field and streams progress as Server-Sent Events; `GET /runs` and `GET /runs/{run_id}` surface persisted results. Set `BROCK_API_KEY` to require an `X-API-Key` header on write endpoints.
+
 ---
 
 ## The four Skills

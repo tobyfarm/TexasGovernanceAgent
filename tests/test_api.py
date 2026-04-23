@@ -52,7 +52,7 @@ def _stub_pipeline(monkeypatch: pytest.MonkeyPatch):
         ),
     ]
 
-    async def _fake_invoke(prompt: str, *, cwd: Path) -> str:
+    async def _fake_invoke(prompt: str, *, cwd: Path, mode: str = "BROCK_FULL") -> str:
         return json.dumps(
             {
                 "summary": "s",

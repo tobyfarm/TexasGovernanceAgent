@@ -50,7 +50,7 @@ def _fake_response(item_id: str) -> str:
     )
 
 
-async def _fake_invoke(prompt: str, *, cwd: Path) -> str:
+async def _fake_invoke(prompt: str, *, cwd: Path, mode: str = "BROCK_FULL") -> str:
     # crude: pull item_id out of the prompt formatting
     for line in prompt.splitlines():
         if line.startswith("item_id:"):
@@ -118,10 +118,10 @@ async def test_per_item_error_becomes_event(
     items = _fake_items()
     monkeypatch.setattr(run_mod, "extract_agenda_items", lambda *a, **kw: items)
 
-    async def _flaky(prompt: str, *, cwd: Path) -> str:
+    async def _flaky(prompt: str, *, cwd: Path, mode: str = "BROCK_FULL") -> str:
         if "item_id: B" in prompt:
             raise RuntimeError("model timeout")
-        return await _fake_invoke(prompt, cwd=cwd)
+        return await _fake_invoke(prompt, cwd=cwd, mode=mode)
 
     monkeypatch.setattr(run_mod, "_invoke", _flaky)
 
@@ -147,13 +147,13 @@ async def test_concurrency_is_bounded(
     max_in_flight = 0
     start_event = asyncio.Event()
 
-    async def _slow(prompt: str, *, cwd: Path) -> str:
+    async def _slow(prompt: str, *, cwd: Path, mode: str = "BROCK_FULL") -> str:
         nonlocal in_flight, max_in_flight
         in_flight += 1
         max_in_flight = max(max_in_flight, in_flight)
         await asyncio.sleep(0.01)
         in_flight -= 1
-        return await _fake_invoke(prompt, cwd=cwd)
+        return await _fake_invoke(prompt, cwd=cwd, mode=mode)
 
     monkeypatch.setattr(run_mod, "_invoke", _slow)
     start_event.set()

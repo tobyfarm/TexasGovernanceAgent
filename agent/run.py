@@ -41,15 +41,30 @@ from agent.types import (
     Citation,
     Flag,
     ItemAnalysis,
+    OutputMode,
 )
 
 logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
+RUNS_DIR = REPO_ROOT / "logs" / "runs"
 DEFAULT_CONCURRENCY = 4
 
-SYSTEM_PROMPT = """You are the Board Book Red Team lead agent for a Texas school board trustee.
+_JSON_SCHEMA_TAIL = """Return *only* a JSON object with this shape:
+{
+  "summary": "one-paragraph What Is Happening",
+  "key_data": "markdown tables / figures",
+  "legal_framework": "What the law says, with citations",
+  "flags": [{"severity": "WATCH|RED_FLAG|POSITIVE", "pattern_id": "...", "summary": "...", "detail": "...", "citations": ["TEC §11.151(b)"]}],
+  "questions": ["numbered governance question"],
+  "citations": [{"authority": "TEC §11.151(b)", "quoted_text": null, "verified": false}]
+}
+No prose before or after the JSON.
+"""
+
+_BROCK_PROMPT = (
+    """You are the Board Book Red Team lead agent for a Texas school board trustee.
 
 For each agenda item you are handed:
 1. Map every authority invoked in the item to statute using the statute-mapper Skill.
@@ -66,17 +81,32 @@ Preserve the voice patterns from skills/governance-principles/principles.md §IV
 - No corporate filler. No stacked em-dash qualifiers.
 - Warm only on students.
 
-Return *only* a JSON object with this shape:
-{
-  "summary": "one-paragraph What Is Happening",
-  "key_data": "markdown tables / figures",
-  "legal_framework": "What the law says, with citations",
-  "flags": [{"severity": "WATCH|RED_FLAG|POSITIVE", "pattern_id": "...", "summary": "...", "detail": "...", "citations": ["TEC §11.151(b)"]}],
-  "questions": ["numbered governance question"],
-  "citations": [{"authority": "TEC §11.151(b)", "quoted_text": null, "verified": false}]
-}
-No prose before or after the JSON.
 """
+    + _JSON_SCHEMA_TAIL
+)
+
+_SAMCO_PROMPT = (
+    """You are a trustee preparing a SAMCO-style line of questioning for the finance
+adviser on each agenda item you are handed.
+
+Your output emphasises QUESTIONS over analysis. For each item:
+1. Read the item. Identify the decision the board is being asked to make.
+2. Pull the two or three most consequential unknowns — the ones a trustee must
+   surface before voting.
+3. Phrase each unknown as a direct, respectful question to the adviser or staff.
+4. Attach only the citations you are certain of (statute-mapper verified).
+
+The `summary` should be one sentence naming the decision. `questions` is the
+primary output: 3-7 precise, numbered questions. `legal_framework`, `flags`,
+and `key_data` may be empty when nothing is material.
+
+"""
+    + _JSON_SCHEMA_TAIL
+)
+
+
+def _system_prompt(mode: OutputMode) -> str:
+    return _SAMCO_PROMPT if mode == "SAMCO_LOQ" else _BROCK_PROMPT
 
 
 # ---------------------------------------------------------------------------
@@ -133,7 +163,7 @@ def _extract_json(text: str) -> dict:
     return json.loads(text[start : end + 1])
 
 
-async def _invoke_agent(prompt: str, *, cwd: Path) -> str:
+async def _invoke_agent(prompt: str, *, cwd: Path, mode: OutputMode = "BROCK_FULL") -> str:
     """Drive one Agent SDK query turn and return the concatenated assistant text."""
     from claude_agent_sdk import (
         AssistantMessage,
@@ -143,7 +173,7 @@ async def _invoke_agent(prompt: str, *, cwd: Path) -> str:
     )
 
     options = ClaudeAgentOptions(
-        system_prompt=SYSTEM_PROMPT,
+        system_prompt=_system_prompt(mode),
         cwd=str(cwd),
         setting_sources=["project"],
     )
@@ -167,8 +197,9 @@ async def _run_item(
     cwd: Path,
     run_id: str,
     source_pdf: str,
+    mode: OutputMode = "BROCK_FULL",
 ) -> ItemAnalysis:
-    text = await _invoke(_user_prompt(item), cwd=cwd)
+    text = await _invoke(_user_prompt(item), cwd=cwd, mode=mode)
 
     try:
         parsed = _extract_json(text)
@@ -245,6 +276,7 @@ async def analyze_pdf_stream(
     *,
     manual_split: Path | None = None,
     concurrency: int | None = None,
+    mode: OutputMode = "BROCK_FULL",
 ) -> AsyncIterator[AnalyzeEvent]:
     """Drive the full pipeline, yielding AnalyzeEvent objects.
 
@@ -267,7 +299,7 @@ async def analyze_pdf_stream(
 
     yield AnalyzeEvent(
         "ingest_done",
-        {"run_id": run_id, "item_count": len(items), "source_pdf": source_pdf},
+        {"run_id": run_id, "item_count": len(items), "source_pdf": source_pdf, "mode": mode},
     )
 
     sem = asyncio.Semaphore(concurrency or DEFAULT_CONCURRENCY)
@@ -281,7 +313,7 @@ async def analyze_pdf_stream(
             await queue.put(AnalyzeEvent("item_start", {"idx": idx, "item_id": item.item_id}))
             try:
                 analysis = await _run_item(
-                    item, cwd=REPO_ROOT, run_id=run_id, source_pdf=source_pdf
+                    item, cwd=REPO_ROOT, run_id=run_id, source_pdf=source_pdf, mode=mode
                 )
                 results[idx] = analysis
                 await queue.put(
@@ -328,10 +360,29 @@ async def analyze_pdf_stream(
         executive_summary_table=[_exec_summary_row(a) for a in ordered],
         items=ordered,
         prep_checklist=[],
-        output_mode="BROCK_FULL",
+        output_mode=mode,
     )
 
+    _persist_run(run_id, final)
+
     yield AnalyzeEvent("result_done", final.model_dump(mode="json"))
+
+
+def _persist_run(run_id: str, result: AnalysisResult) -> Path:
+    """Write result.json + result.md + meta.json to logs/runs/{run_id}/."""
+    run_dir = RUNS_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "result.json").write_text(result.model_dump_json(indent=2))
+    (run_dir / "result.md").write_text(_render_markdown(result))
+    meta = {
+        "run_id": run_id,
+        "source_pdf": result.source_pdf,
+        "generated_at": result.generated_at.isoformat(),
+        "mode": result.output_mode,
+        "item_count": len(result.items),
+    }
+    (run_dir / "meta.json").write_text(json.dumps(meta, indent=2))
+    return run_dir
 
 
 async def analyze_pdf(
@@ -339,11 +390,12 @@ async def analyze_pdf(
     *,
     manual_split: Path | None = None,
     concurrency: int | None = None,
+    mode: OutputMode = "BROCK_FULL",
 ) -> AnalysisResult:
     """Non-streaming wrapper. Collects stream events and returns the final result."""
     final: AnalysisResult | None = None
     async for event in analyze_pdf_stream(
-        pdf_path, manual_split=manual_split, concurrency=concurrency
+        pdf_path, manual_split=manual_split, concurrency=concurrency, mode=mode
     ):
         if event.name == "result_done":
             final = AnalysisResult.model_validate(event.data)
@@ -407,6 +459,44 @@ def _render_markdown(result: AnalysisResult) -> str:
     return "\n".join(lines)
 
 
+async def _run_cli(args) -> tuple[int, AnalysisResult | None, str | None]:
+    """Drive the stream in the CLI with live progress. Returns (exit_code, result, run_id)."""
+    run_id: str | None = None
+    item_count = 0
+    done = 0
+    result: AnalysisResult | None = None
+
+    try:
+        async for event in analyze_pdf_stream(
+            args.pdf,
+            manual_split=args.manual_split,
+            concurrency=args.concurrency,
+            mode=args.mode,
+        ):
+            if event.name == "ingest_done":
+                run_id = event.data["run_id"]
+                item_count = event.data["item_count"]
+                print(f"[ingest] run_id={run_id}  items={item_count}  mode={event.data['mode']}")
+            elif event.name == "item_start":
+                print(f"[start ] item {event.data['item_id']}")
+            elif event.name == "item_done":
+                done += 1
+                print(f"[done  ] item {event.data['item_id']}  ({done}/{item_count})")
+            elif event.name == "item_error":
+                done += 1
+                print(
+                    f"[error ] item {event.data['item_id']}: {event.data['error']}",
+                    file=sys.stderr,
+                )
+            elif event.name == "result_done":
+                result = AnalysisResult.model_validate(event.data)
+    except AnalysisError as exc:
+        print(f"error ({exc.code}): {exc}", file=sys.stderr)
+        return 1, None, run_id
+
+    return 0, result, run_id
+
+
 def main(argv: list[str] | None = None) -> int:
     load_dotenv()
     logging.basicConfig(
@@ -423,7 +513,10 @@ def main(argv: list[str] | None = None) -> int:
         help="Optional YAML item_id→[start,end] page map.",
     )
     parser.add_argument(
-        "--output", type=Path, default=None, help="Where to write the markdown pre-read."
+        "--output",
+        type=Path,
+        default=None,
+        help="Where to write the markdown pre-read (defaults next to the PDF).",
     )
     parser.add_argument(
         "--concurrency",
@@ -431,19 +524,21 @@ def main(argv: list[str] | None = None) -> int:
         default=DEFAULT_CONCURRENCY,
         help=f"Max parallel item analyses (default: {DEFAULT_CONCURRENCY}).",
     )
+    parser.add_argument(
+        "--mode",
+        choices=["BROCK_FULL", "SAMCO_LOQ"],
+        default="BROCK_FULL",
+        help="Output mode (default: BROCK_FULL).",
+    )
     args = parser.parse_args(argv)
 
     if not args.pdf.exists():
         print(f"error: pdf not found: {args.pdf}", file=sys.stderr)
         return 2
 
-    try:
-        result = asyncio.run(
-            analyze_pdf(args.pdf, manual_split=args.manual_split, concurrency=args.concurrency)
-        )
-    except AnalysisError as exc:
-        print(f"error ({exc.code}): {exc}", file=sys.stderr)
-        return 1
+    exit_code, result, run_id = asyncio.run(_run_cli(args))
+    if exit_code != 0 or result is None:
+        return exit_code or 1
 
     out_md = args.output or args.pdf.with_name(args.pdf.stem + "_output.md")
     out_md.write_text(_render_markdown(result))
@@ -452,6 +547,8 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"wrote {out_md}")
     print(f"wrote {out_json}")
+    if run_id:
+        print(f"run_id: {run_id}  (artifacts in logs/runs/{run_id}/)")
     return 0
 
 
