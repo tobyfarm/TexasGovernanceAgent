@@ -103,8 +103,23 @@ def _flag_counts(text: str) -> dict[str, int]:
     return counts
 
 
+def _clean_header(text: str) -> str:
+    """Normalise a header caption for matching: strip bold/italic markers,
+    trailing `\\#` escapes, numeric prefixes like 'Item 4:', and collapse
+    whitespace. Case-insensitive."""
+    s = text.strip()
+    # Strip leading/trailing markdown bold/italic (** or __, * or _)
+    s = re.sub(r"^[\*_]{1,3}", "", s)
+    s = re.sub(r"[\*_]{1,3}$", "", s)
+    # Strip backslash-escaped hashes (some hand authors use \# as literal)
+    s = s.replace("\\#", "#")
+    # Collapse whitespace
+    s = _NORMALIZE_WS.sub(" ", s)
+    return s.strip().lower()
+
+
 def _headers(text: str) -> set[str]:
-    return {_norm(m.group(1)) for m in _HEADER_RE.finditer(text)}
+    return {_clean_header(m.group(1)) for m in _HEADER_RE.finditer(text)}
 
 
 def compare(generated: Path, hand: Path) -> ComparisonReport:
