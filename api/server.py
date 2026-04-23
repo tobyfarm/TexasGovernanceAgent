@@ -259,3 +259,44 @@ async def get_run_citations(
             if row.get("run_id") == run_id:
                 rows.append(row)
     return {"run_id": run_id, "citations": rows}
+
+
+@app.get("/runs/{run_id}/eval")
+async def get_run_eval(
+    run_id: str,
+    vs_hand: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    """Compare the run's generated markdown against a hand-written reference.
+
+    `vs_hand` is a path relative to the repo root, restricted to the
+    `examples/` directory so callers can't read arbitrary files. Returns the
+    ComparisonReport as JSON — same shape `eval.compare` emits.
+    """
+    _require_api_key(x_api_key)
+    if not run_id.isalnum():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid run_id")
+
+    generated = RUNS_DIR / run_id / "result.md"
+    if not generated.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
+
+    # Only allow comparing against the checked-in examples/ folder.
+    hand = (REPO_ROOT / vs_hand).resolve()
+    examples_dir = (REPO_ROOT / "examples").resolve()
+    try:
+        hand.relative_to(examples_dir)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="vs_hand must point into examples/",
+        ) from None
+    if not hand.exists():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="hand version not found")
+
+    from eval.compare import compare
+
+    report = compare(generated, hand)
+    payload = report.__dict__.copy()
+    payload["score"] = report.score()
+    return payload
