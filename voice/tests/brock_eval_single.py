@@ -19,10 +19,12 @@ Usage:
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import json
 import os
 import subprocess
+import wave
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -112,7 +114,13 @@ class PersistentSession:
     async def close(self) -> None:
         await self._close_quiet()
 
-    async def ask(self, question: str, *, timeout: float = 60) -> dict:
+    async def ask(
+        self,
+        question: str,
+        *,
+        timeout: float = 60,
+        audio_sink: bytearray | None = None,
+    ) -> dict:
         transcript: list[str] = []
         audio_bytes = 0
         error: str | None = None
@@ -134,6 +142,8 @@ class PersistentSession:
                     async for msg in self.ws:
                         if isinstance(msg, bytes):
                             audio_bytes += len(msg)
+                            if audio_sink is not None:
+                                audio_sink.extend(msg)
                             continue
                         data = json.loads(msg)
                         kind = data.get("type")
@@ -231,7 +241,16 @@ class PersistentSession:
         }
 
 
-async def run() -> int:
+def _save_wav_24khz(path: Path, pcm: bytes) -> None:
+    """Write 24 kHz mono 16-bit LE PCM to a WAV file."""
+    with wave.open(str(path), "wb") as w:
+        w.setnchannels(1)
+        w.setsampwidth(2)
+        w.setframerate(24000)
+        w.writeframes(pcm)
+
+
+async def run(save_audio: bool = False) -> int:
     port = int(os.environ.get("VOICE_BRIDGE_PORT", "8803"))
     env = {**os.environ, "VOICE_BRIDGE_PORT": str(port), "VOICE_BRIDGE_HOST": "127.0.0.1"}
     bridge_log_path = VOICE_DIR / "tests" / "brock_eval_single_bridge.log"
@@ -252,10 +271,18 @@ async def run() -> int:
         session = PersistentSession(
             uri, {"document_id": DOCUMENT_ID, "modality": "AUDIO"}
         )
+        audio_dir = VOICE_DIR / "tests" / "audio_samples"
+        if save_audio:
+            audio_dir.mkdir(exist_ok=True)
         try:
             for i, q in enumerate(QUESTIONS, start=1):
                 print(f"\n[Q{i}] {q}")
-                r = await session.ask(q)
+                sink: bytearray | None = bytearray() if save_audio else None
+                r = await session.ask(q, audio_sink=sink)
+                if save_audio and sink:
+                    out = audio_dir / f"q{i}.wav"
+                    _save_wav_24khz(out, bytes(sink))
+                    r["wav_path"] = str(out.relative_to(VOICE_DIR))
                 flags = []
                 if r.get("reconnected"):
                     flags.append("reconnected")
@@ -322,4 +349,11 @@ async def run() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(asyncio.run(run()))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--save-audio",
+        action="store_true",
+        help="save each turn's 24 kHz PCM reply to tests/audio_samples/qN.wav",
+    )
+    args = parser.parse_args()
+    raise SystemExit(asyncio.run(run(save_audio=args.save_audio)))
