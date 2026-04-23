@@ -1,0 +1,212 @@
+@import "tailwindcss";
+
+/* ---------- Design tokens ---------- */
+
+:root {
+  --cream: #faf9f5;
+  --cream-2: #f3f1e8;
+  --ink: #141413;
+  --ink-soft: #2b2a27;
+  --mute: #6b6860;
+  --line: #d8d4c5;
+  --light-gray: #e8e6dc;
+  --mid-gray: #b0aea5;
+  --orange: #d97757;
+  --orange-deep: #b85f3f;
+  --blue: #6a9bcc;
+  --blue-deep: #3d7bb5;
+  --green: #788c5d;
+  --green-deep: #5c6d45;
+
+  --paper-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.078 0 0 0 0 0.078 0 0 0 0 0.074 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* Expose tokens to Tailwind v4 utilities. */
+@theme inline {
+  --color-cream: var(--cream);
+  --color-cream-2: var(--cream-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-mute: var(--mute);
+  --color-line: var(--line);
+  --color-light-gray: var(--light-gray);
+  --color-mid-gray: var(--mid-gray);
+  --color-orange: var(--orange);
+  --color-orange-deep: var(--orange-deep);
+  --color-blue: var(--blue);
+  --color-blue-deep: var(--blue-deep);
+  --color-green: var(--green);
+  --color-green-deep: var(--green-deep);
+
+  --font-serif: var(--font-fraunces), Georgia, serif;
+  --font-sans: var(--font-instrument-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+}
+
+/* ---------- Base ---------- */
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--cream);
+  background-image: var(--paper-grain);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgba(217, 119, 87, 0.25);
+  color: var(--ink);
+}
+
+/* ---------- Typography utilities ---------- */
+
+@utility serif {
+  font-family: var(--font-serif);
+  font-variation-settings: "SOFT" 40, "WONK" 0;
+}
+
+@utility mono {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  letter-spacing: -0.01em;
+}
+
+/* The signature italic — flips WONK on, dials SOFT up. Use on <em> inside serif headings. */
+@utility wonk-italic {
+  font-style: italic;
+  font-variation-settings: "SOFT" 100, "WONK" 1;
+}
+
+@utility display {
+  font-family: var(--font-serif);
+  font-weight: 340;
+  font-size: clamp(44px, 7vw, 104px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  font-variation-settings: "SOFT" 70, "WONK" 0, "opsz" 144;
+}
+
+@utility section-title {
+  font-family: var(--font-serif);
+  font-weight: 320;
+  font-size: clamp(32px, 4.8vw, 64px);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-variation-settings: "SOFT" 60, "opsz" 144;
+}
+
+@utility section-lede {
+  font-family: var(--font-serif);
+  font-weight: 330;
+  font-size: clamp(20px, 1.8vw, 24px);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+}
+
+@utility hero-sub {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(20px, 2vw, 26px);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  color: var(--ink-soft);
+}
+
+@utility pull {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: clamp(28px, 3.2vw, 42px);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+  font-variation-settings: "SOFT" 80, "opsz" 144;
+}
+
+@utility eyebrow {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--mute);
+}
+
+@utility label-mono {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--mute);
+}
+
+@utility cite-chip {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: -0.005em;
+  color: var(--orange-deep);
+  background: rgba(217, 119, 87, 0.1);
+  padding: 2px 8px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+/* ---------- Layout ---------- */
+
+@utility container-wide {
+  max-width: 1240px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+@utility container-narrow {
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+@media (max-width: 640px) {
+  .container-wide,
+  .container-narrow {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* ---------- Focus ring ---------- */
+
+:focus-visible {
+  outline: 2px solid var(--orange);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ---------- Motion ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.9s cubic-bezier(0.2, 0.8, 0.3, 1),
+    transform 0.9s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  html { scroll-behavior: auto; }
+}

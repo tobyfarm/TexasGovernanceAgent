@@ -54,3 +54,4 @@ examples/*_output.docx
 
 # Worktrees — never track the dirs themselves, just the links git manages
 .git/worktrees/
+.gstack/
