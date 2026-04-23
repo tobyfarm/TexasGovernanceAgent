@@ -39,3 +39,53 @@ mechanism).
 **Cross-references:** TGC §1207.007 (refunding-specific delegation); MSRB G-42 (advisor fiduciary duty to the governing body).
 
 **Common usage in board context:** Cited on new-money issuances that delegate final pricing parameters to a Pricing Officer. Same question as §1207.007: what oversight does the Board preserve? If the delegation bounds (max principal, max TIC, expiration date) are missing or loose, the Board has handed the pricing decision to one person with no checkpoint. That's Risk Pattern #2.
+
+---
+
+### TGC Chapter 1207
+
+**Title.** Government Code Chapter 1207 — Refunding Bonds (statewide framework).
+
+<!-- TODO: short overview of TGC Ch. 1207 scope goes here. Key elements: -->
+<!--   - Statewide refunding-bond framework across all public entities -->
+<!--   - Refunding bonds do not require a voter election -->
+<!--   - Maturity cannot exceed 40 years from original issuance -->
+<!--   - Authorizes Capital Appreciation Bond structures -->
+<!-- Source: https://statutes.capitol.texas.gov/Docs/GV/htm/GV.1207.htm -->
+
+**Cross-references:** TGC §1207.007 (Pricing Officer delegation); TEC §45.004 (district refunding authority); TGC Ch. 1371 (general public-security authority).
+
+**Common usage in board context:** Cited alongside TEC §45.004 when analyzing a refunding bond order. The chapter-level citation is appropriate when the specific subsection isn't the point — the point is that refunding authority is a statewide framework that applies to all public entities. Pairs with Risk Pattern #3 (bond restructuring framed as savings) and Agent C's RF_27 (CAB authorization without total cost disclosure).
+
+---
+
+### TGC Chapter 1371
+
+**Title.** Government Code Chapter 1371 — Obligations for Public Improvements (self-sufficient authority).
+
+<!-- TODO: short overview of TGC Ch. 1371 scope goes here. Key elements: -->
+<!--   - Self-sufficient authority for public improvement obligations -->
+<!--   - Overrides conflicting provisions in other law -->
+<!--   - Provides additional Pricing Officer delegation authority -->
+<!-- Source: https://statutes.capitol.texas.gov/Docs/GV/htm/GV.1371.htm -->
+
+**Cross-references:** TGC §1371.053 (Pricing Officer delegation); TGC Ch. 1207 (refunding framework).
+
+**Common usage:** Cited alongside §1371.053 when a bond order invokes the broader chapter-level authority. Note that Chapter 1371 is self-sufficient — it can override conflicting provisions in other law. That override matters for parameter orders that rely on it as an alternate basis for delegation.
+
+---
+
+### Capital Appreciation Bonds (authorization pattern)
+
+**Title.** Capital Appreciation Bonds — structural note under TGC Ch. 1207 / TEC §45.004.
+
+<!-- TODO: short note on CAB structure and disclosure considerations. -->
+<!-- Key elements: -->
+<!--   - CABs accrue interest that compounds and is paid at maturity -->
+<!--   - Total repayment cost can be multiples of principal -->
+<!--   - Typically authorized under §3(c) of a parameter order -->
+<!--   - §3(d) of parameter orders specifies Compounded Amount treatment -->
+
+**Cross-references:** TGC Ch. 1207 (refunding framework that authorizes CAB structures); TEC §45.004 (district refunding authority); MSRB G-42 (advisor fiduciary duty on disclosure).
+
+**Common usage in board context:** Cited by Agent C's RF_27 when a parameter order authorizes CABs without a total-cost-of-debt disclosure. The April 13, 2026 Brock packet's bond parameter order includes §3(c) CAB language (*"The Bonds may be issued in one or more series as Current Interest Bonds or Capital Appreciation Bonds, or a combination thereof, as set forth in the Pricing Certificate"*). That authorization alone does not disclose the compounding cost to taxpayers — Principle 15 (tell the community) and Risk Pattern #3 (bond restructuring framed as savings) apply.

@@ -64,11 +64,31 @@ _CODE_ALIASES: dict[str, str] = {
     "tex. const.": "TXCONST",
     "texas const.": "TXCONST",
     "texas constitution": "TXCONST",
+    # Texas Tax Code — distinct from TAC (Administrative Code).
+    "tax code": "TAX",
+    "texas tax code": "TAX",
+    "tex. tax code": "TAX",
+    # Texas Health and Safety Code.
+    "hsc": "HSC",
+    "health and safety code": "HSC",
+    "health & safety code": "HSC",
+    "h&s code": "HSC",
+    "texas health and safety code": "HSC",
+    "tex. health & safety code": "HSC",
+    # Texas House Bills (session laws) — recognize short forms.
+    "hb": "TXHB",
+    "h.b.": "TXHB",
+    "h. b.": "TXHB",
+    "house bill": "TXHB",
+    "tex. h.b.": "TXHB",
 }
 
 # Section numbers look like 11.151, 11.151(b), 11.1511(b)(2), 551.0821, etc.
-# Also handles ranges like "45.051–45.063" (em-dash or hyphen).
-_SECTION_RE = re.compile(r"(\d+\.\d+[A-Za-z0-9()–\-]*(?:–\d+\.\d+)?)")
+# Also handles ranges like "45.051-45.063" (em-dash or hyphen).
+# Note: the subsection char class excludes BOTH `-` and `–` so that the
+# range-extender (em-dash OR hyphen) can claim them; otherwise greedy
+# matching would truncate the range like "45.051-45" (missing ".063").
+_SECTION_RE = re.compile(r"(\d+\.\d+[A-Za-z0-9()]*(?:[–\-]\d+\.\d+[A-Za-z0-9()]*)?)")
 # MSRB rule numbers look like G-17, G-42, D-1, etc.
 _MSRB_RE = re.compile(r"\b([A-Z]-\d+)\b")
 # SEC rule numbers look like 15c2-12, 15Ba1-1, etc.
@@ -108,6 +128,17 @@ def _normalize(citation: str) -> tuple[str | None, str | None]:
     raw = citation.strip()
     lower = raw.lower()
 
+    # Early short-circuit: Texas House Bill citations like "HB3" (no space
+    # between "HB" and the number) fail the standard alias boundary because
+    # `(?=\W|$)` rejects the immediate digit. Match the whole pattern here.
+    hb_m = re.match(
+        r"\s*(?:HB|H\.B\.|H\. B\.|House\s+Bill)\s*(\d+)",
+        raw,
+        re.IGNORECASE,
+    )
+    if hb_m:
+        return "TXHB", f"HB{hb_m.group(1)}"
+
     # Match the longest code alias that appears as a prefix-ish token.
     # Use non-word boundaries that work even when the alias ends in "." —
     # \b fails on trailing punctuation because \b requires a \w/\W transition.
@@ -139,8 +170,27 @@ def _normalize(citation: str) -> tuple[str | None, str | None]:
         m = _CONST_RE.search(raw)
         return (code, f"art. {m.group(1).upper()} §{m.group(2)}") if m else (code, None)
 
+    if code == "TXHB":
+        # Texas House Bill: "HB3", "HB 3", "H.B. 3", optional session suffix
+        # like "(86R, 2019)" or "(2019)". Normalize to "HB<N>".
+        m = re.search(
+            r"\b(?:HB|H\.B\.|H\. B\.|House\s+Bill)\s*(\d+)", raw, re.IGNORECASE
+        )
+        return (code, f"HB{m.group(1)}") if m else (code, None)
+
+    if code == "HSC":
+        # HSC may be cited as "Chapter 390" (chapter-level) or "§390.001" (section).
+        m = _SECTION_RE.search(raw)
+        if m:
+            return (code, m.group(1).replace("–", "-"))
+        m = re.search(r"(?:Chapter|Ch\.)\s*(\d+)", raw, re.IGNORECASE)
+        return (code, m.group(1)) if m else (code, None)
+
     m = _SECTION_RE.search(raw)
-    return (code, m.group(1)) if m else (code, None)
+    if not m:
+        return (code, None)
+    # Normalize em-dash → hyphen so ranges match consistently with headings.
+    return (code, m.group(1).replace("–", "-"))
 
 
 def _canonical(code: str, section: str) -> str:
@@ -150,8 +200,19 @@ def _canonical(code: str, section: str) -> str:
         return f"SEC Rule {section}"
     if code == "TXCONST":
         return f"Tex. Const. {section}"
+    if code == "TXHB":
+        return section  # e.g., "HB3"
+    if code == "HSC":
+        # HSC headings use a chapter-level form for now ("HSC Chapter 390").
+        # A bare chapter number like "390" normalizes to "HSC Chapter 390";
+        # a section like "390.001" stays as "HSC §390.001".
+        if "." not in section:
+            return f"HSC Chapter {section}"
+        return f"HSC §{section}"
     if code == "LOCAL":
         return section  # BE(LOCAL), BED(LOCAL), CQD, ... are their own canonical
+    if code == "TAX":
+        return f"Tax Code §{section}"
     return f"{code} §{section}"
 
 
@@ -268,7 +329,15 @@ def verify(citation: str, corpus_dir: Path | None = None) -> VerificationResult:
             diagnostic=f"Corpus directory not found at {corpus}.",
         )
 
-    exact_heading_re = re.compile(rf"^###\s+{re.escape(canonical)}\s*$", re.MULTILINE)
+    # § and §§ are fungible in headings — "§§45.051-45.063" and "§45.051-45.063"
+    # refer to the same authority. Also accept a descriptive parenthetical
+    # suffix on the heading (e.g., "HB3 (86R, 2019)", "TEC §§45.051-45.063
+    # (Subchapter C: PSF Bond Guarantee Program)"). The suffix MUST be
+    # preceded by whitespace — that prevents silent expansion of a bare
+    # section citation into a subsection citation like "(b)".
+    # NOTE: re.escape does NOT backslash `§` — replace the raw character.
+    flex = re.escape(canonical).replace("§", "§§?")
+    exact_heading_re = re.compile(rf"^###\s+{flex}(?:\s+\(.*\))?\s*$", re.MULTILINE)
 
     partial_candidates: list[tuple[str, str]] = []  # (heading, source_file)
 
@@ -388,6 +457,24 @@ _CITATION_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"SEC\s+Rule\s+\d+[A-Za-z]+\d+(?:-\d+)?", re.IGNORECASE),
     # MSRB Rule — e.g. "MSRB Rule G-42", "MSRB G-42"
     re.compile(r"MSRB(?:\s+Rule)?\s+[A-Z]-\d+"),
+    # Texas Tax Code — "Tax Code §26.06"
+    re.compile(
+        r"(?:Tex(?:as)?\.?\s+)?Tax\s+Code\s+§?\s*\d+\.\d+[A-Za-z0-9()]*",
+        re.IGNORECASE,
+    ),
+    # Texas Health & Safety Code — "HSC Chapter 390", "Health & Safety Code Ch. 390"
+    re.compile(
+        r"(?:Tex(?:as)?\.?\s+)?Health\s*(?:and|&)\s*Safety\s+Code\s+"
+        r"(?:Chapter|Ch\.)\s*\d+",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bHSC\s+(?:Chapter|Ch\.)\s*\d+", re.IGNORECASE),
+    # Texas House Bills — "HB3", "HB 3", "H.B. 3", "House Bill 3" (with optional session suffix)
+    re.compile(
+        r"\b(?:HB|H\.B\.|H\. B\.|House\s+Bill)\s*\d+"
+        r"(?:\s*\(\d+R?(?:,\s*\d{4})?\))?",
+        re.IGNORECASE,
+    ),
     # Qualified code + section — e.g. "Texas Education Code 11.151(b)",
     # "Tex. Educ. Code §11.151(b)", "TEC §11.151(b)", "Government Code 551.074"
     re.compile(

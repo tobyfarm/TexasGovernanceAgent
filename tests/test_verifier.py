@@ -299,6 +299,75 @@ def test_brock_hand_pre_read_citations_all_recognized() -> None:
     )
 
 
+def test_tax_code_normalization(tmp_path: Path) -> None:
+    (tmp_path / "tax.md").write_text(
+        "### Tax Code §26.06\n\n> Notice, hearing, and vote on tax increase.\n",
+        encoding="utf-8",
+    )
+    for variant in [
+        "Tax Code §26.06",
+        "Texas Tax Code §26.06",
+        "Tex. Tax Code 26.06",
+    ]:
+        r = verify(variant, corpus_dir=tmp_path)
+        assert r.verified is True, f"variant failed: {variant!r} → {r.status}"
+        assert r.authority == "Tax Code §26.06"
+
+
+def test_tax_code_does_not_collide_with_tac(tmp_path: Path) -> None:
+    """Texas Tax Code and Texas Administrative Code must not alias to the same code."""
+    (tmp_path / "tax.md").write_text(
+        "### Tax Code §26.06\n\n> Notice, hearing.\n",
+        encoding="utf-8",
+    )
+    (tmp_path / "tac.md").write_text(
+        "### TAC §19.123\n\n> Admin rule text.\n",
+        encoding="utf-8",
+    )
+    r_tax = verify("Tax Code §26.06", corpus_dir=tmp_path)
+    r_tac = verify("TAC §19.123", corpus_dir=tmp_path)
+    assert r_tax.verified is True and r_tax.authority == "Tax Code §26.06"
+    assert r_tac.verified is True and r_tac.authority == "TAC §19.123"
+
+
+def test_hsc_chapter_level_normalization(tmp_path: Path) -> None:
+    (tmp_path / "hsc.md").write_text(
+        "### HSC Chapter 390\n\n> Texas Emissions Reduction Plan.\n",
+        encoding="utf-8",
+    )
+    for variant in [
+        "HSC Chapter 390",
+        "Health and Safety Code Chapter 390",
+        "Texas Health & Safety Code Ch. 390",
+    ]:
+        r = verify(variant, corpus_dir=tmp_path)
+        assert r.verified is True, f"variant failed: {variant!r} → {r.status}"
+        assert r.authority == "HSC Chapter 390"
+
+
+def test_house_bill_normalization(tmp_path: Path) -> None:
+    (tmp_path / "bills.md").write_text(
+        "### HB3\n\n> 86R school finance bill.\n\n### HB2\n\n> 88R teacher retention.\n",
+        encoding="utf-8",
+    )
+    for variant in ["HB3", "HB 3", "H.B. 3", "House Bill 3", "HB3 (86R, 2019)"]:
+        r = verify(variant, corpus_dir=tmp_path)
+        assert r.verified is True, f"variant failed: {variant!r} → {r.status}"
+        assert r.authority == "HB3"
+
+
+def test_range_citation_hyphen_and_emdash_both_match(tmp_path: Path) -> None:
+    """Queries with ASCII hyphen match headings with ASCII hyphen, and em-dash
+    in the query is normalized to hyphen before matching."""
+    (tmp_path / "bonds.md").write_text(
+        "### TEC §§45.051-45.063\n\n> PSF Bond Guarantee subchapter.\n",
+        encoding="utf-8",
+    )
+    for variant in ["TEC §§45.051-45.063", "TEC §§45.051–45.063"]:
+        r = verify(variant, corpus_dir=tmp_path)
+        assert r.verified is True, f"variant failed: {variant!r} → {r.status}"
+
+
 def test_live_corpus_is_scaffolded_not_yet_verified() -> None:
     """The bundled corpus at statutes/ is scaffolded — exact headings exist
     but the blockquotes are not yet populated. Until Toby pastes verbatim

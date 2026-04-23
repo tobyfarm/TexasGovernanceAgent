@@ -65,7 +65,7 @@ municipal-advisor fiduciary duty.
 
 ---
 
-### TEC §§45.051–45.063 (Subchapter C: PSF Bond Guarantee Program)
+### TEC §§45.051-45.063 (Subchapter C: PSF Bond Guarantee Program)
 
 **Title.** Permanent School Fund Bond Guarantee Program — full subchapter.
 
