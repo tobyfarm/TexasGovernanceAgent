@@ -261,6 +261,38 @@ Only RF_18 required a severity correction (WATCH → RED_FLAG prospective), ship
 
 ---
 
+## 2026-04-23 · Citation dependencies beyond principles.md §III (for Agent B coordination)
+
+**Purpose.** `principles.md` §III lists the citations Toby uses most often and Agent B loads first into the statute-mapper corpus. The Skills as drafted also emit citations on Brock April 13 items that fall outside that §III list. This section enumerates the gap so Agent B can triage corpus coverage and Toby can decide whether any of these get promoted into §III at the v2 bump.
+
+**Citations already covered by §III** (emit-ready once Agent B loads the corpus):
+- TEC §11.151(b), §11.1511(b)(2)–(3), §11.1512, §11.1515, §11.201(d), §11.251, §39.306, §44.002, §44.004, §44.006, §44.031, §45.001
+- TGC Ch. 551 generally, §551.043, §551.071, §551.072, §551.074, §551.076, §551.082, §551.0821, §551.083, §551.087, §551.101, §551.102, §551.103
+- TGC §1207.007, §1371.053
+- MSRB G-17, G-42
+- Gov't Code Ch. 552 (PIA)
+- BE(LOCAL), BED(LOCAL)
+
+**Citations emitted by the Skills on Brock April 13 that are NOT in §III** (corpus gaps for Agent B's attention):
+
+| Citation | Used by | Item | Purpose |
+|---|---|---|---|
+| TGC §551.041 | P11, RF_04 | K, 7, 9 | Notice-of-meeting / agenda posting requirements (complements §551.043 which covers 72-hour timing) |
+| TGC Ch. 1207 generally | RF_27 | 7 | Capital Appreciation Bond framework (complements §1207.007) |
+| Tax Code §26.06 | RF_17 | 5 (budget), 7 (bond) | Tax-rate hearing notice and procedure |
+| Texas Health & Safety Code Ch. 390 | RF_06 | 11 (bus purchase) | TERP / Texas Clean School Bus Program authority |
+| TGC §791.011, §791.025 | PF_B | 4D (Region 11) | Interlocal Cooperation Act |
+| TEC §21.102, §21.103, §21.206 | (Item 8 legal framework) | 8 (teacher contracts) | Probationary contracts, termination, §21.206 notice deadline |
+| TEC §21.003 | (Item 8 legal framework) | 8 (teacher contracts) | Certification requirement |
+| TEC §21.3521 | RF_25 | 9 (TIA) | Teacher Incentive Allotment |
+| TEC §42 (general) | RF_23 | 5 (budget) | School finance formula / ADA-driven M&O |
+
+**Severity of the gap.** None of these are blocking for the Brock eval as long as the hand version's citations (all of which I matched against) are in the corpus. They become blocking when the pipeline tries to emit a flag that carries one of these anchors and the verifier returns `verified=False`. Per the governance-principles SKILL.md protocol, that triggers a severity downgrade (RED_FLAG → WATCH) or an anchor drop with the question reworded — so the pipeline still runs, it just loses some of the statutory backbone.
+
+**Recommendation to Toby.** Consider adding TGC §551.041, Tax Code §26.06, TEC §21.3521, and TEC §21.102/§21.206 to `principles.md` §III at the next version bump. The others (§790, §1207 framework, Health & Safety Code §390) are one-item-only and can stay out of §III while still being loaded by Agent B's corpus.
+
+---
+
 ## Template for future entries
 
 ```
