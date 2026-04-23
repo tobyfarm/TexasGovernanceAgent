@@ -138,7 +138,9 @@
           "pattern_id": "RF_15",
           "severity": "RED_FLAG",
           "summary": "Recapture payment mentioned as a budget increase with no estimate provided — for a $1.409B taxable-value district this could be seven-figure.",
-          "citations": ["TEC §44.002", "TEC §44.004"]
+          "citations": ["TEC §44.002", "TEC §44.004"],
+          "blocked_on": "v2",
+          "_note": "Under 2026-04-23 tightened RF_15 rules, fires only on ACTION items without total cost. Budget Workshop #1 is discussion-only. The hand version's RED FLAG on the missing recapture estimate is better served by a proposed RF_28 (budget presentation omits known material cost category) — see gaps_for_v2.md secondary gaps. Deferred to v2."
         },
         {
           "pattern_id": "RF_21",
