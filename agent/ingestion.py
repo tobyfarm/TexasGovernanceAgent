@@ -24,18 +24,43 @@ logger = logging.getLogger(__name__)
 
 MIN_WORDS_PER_PAGE = 100
 
-# Ordered by specificity. First match wins per line.
+# Candidate patterns for top-level agenda markers. Titles must start with a
+# letter and have substantive content so we don't pick up dollar amounts in
+# a check register (`138.40  N`) or row labels in a table.
+_MIN_TITLE_CHARS = 5
 _ITEM_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
-    ("numbered_letter", re.compile(r"^\s*(?P<id>\d+[A-Z])\.\s+(?P<title>.+?)\s*$", re.MULTILINE)),
-    ("letter_dot", re.compile(r"^\s*(?P<id>[A-Z])\.\s+(?P<title>.{5,200})\s*$", re.MULTILINE)),
+    (
+        "numbered_letter",
+        re.compile(r"^\s*(?P<id>\d+[A-Z])\.\s+(?P<title>[A-Za-z].{4,200}?)\s*$", re.MULTILINE),
+    ),
+    (
+        "letter_dot",
+        re.compile(r"^\s*(?P<id>[A-Z])\.\s+(?P<title>[A-Z][A-Za-z].{4,200}?)\s*$", re.MULTILINE),
+    ),
     (
         "item_kw",
         re.compile(
-            r"^\s*Item\s+(?P<id>\d+[A-Z]?)[\.\:\s]+(?P<title>.+?)\s*$", re.MULTILINE | re.IGNORECASE
+            r"^\s*Item\s+(?P<id>\d+[A-Z]?)[\.\:\s]+(?P<title>[A-Za-z].{4,200}?)\s*$",
+            re.MULTILINE | re.IGNORECASE,
         ),
     ),
-    ("dotted", re.compile(r"^\s*(?P<id>\d+\.\d+)\s+(?P<title>.+?)\s*$", re.MULTILINE)),
+    (
+        # 1-2 digits, dot, 1-2 digits (blocks 3-digit decimals like 138.40).
+        # Title must start with a letter. Fits real sub-item numbering (1.1,
+        # 2.3) without matching financial figures or statute citations.
+        "dotted",
+        re.compile(
+            r"^\s*(?P<id>\d{1,2}\.\d{1,2})(?!\d)\s+(?P<title>[A-Za-z].{4,200}?)\s*$",
+            re.MULTILINE,
+        ),
+    ),
 ]
+
+# Agenda listings are concentrated at the start of a board book. If a
+# pattern's first match is past this fraction of the document, that pattern
+# is likely matching body content (tables, statute citations, check lines),
+# not the agenda — skip it.
+_AGENDA_HEAD_FRACTION = 0.2
 
 _TYPE_KEYWORDS: list[tuple[ItemType, tuple[str, ...]]] = [
     ("CLOSED_SESSION", ("closed session", "executive session", "§551.071", "§551.072", "§551.074")),
@@ -91,17 +116,46 @@ def _find_boundaries(pages: list[str]) -> list[tuple[str, str, int, int]]:
 
     Returns list of (item_id, title, start_page_1indexed, end_page_1indexed).
     Page numbers are 1-indexed to match PDF convention.
+
+    Selection strategy:
+      1. Evaluate every candidate regex family against the full document.
+      2. Drop any family whose first match is past _AGENDA_HEAD_FRACTION of
+         the doc — the real agenda is at the top.
+      3. Require each match's title to be substantive (letter-leading, min
+         length enforced in the regex).
+      4. Pick the family with the most surviving matches; ties broken by
+         declaration order in _ITEM_PATTERNS.
     """
     full_text = "\n".join(pages)
+    doc_len = max(len(full_text), 1)
+    head_cutoff = int(doc_len * _AGENDA_HEAD_FRACTION)
 
-    # Find the pattern family that yields the most matches — keeps us from
-    # mixing e.g. list letters with real agenda letters.
     best: list[tuple[str, str, int]] = []
     best_name = ""
     for name, pattern in _ITEM_PATTERNS:
         matches: list[tuple[str, str, int]] = []
+        seen_ids: set[str] = set()
         for m in pattern.finditer(full_text):
-            matches.append((m.group("id"), m.group("title").strip(), m.start()))
+            title = m.group("title").strip()
+            if len(title) < _MIN_TITLE_CHARS:
+                continue
+            item_id = m.group("id")
+            # Keep only the first occurrence of each ID — body content often
+            # repeats the agenda letter alongside fuller item text.
+            if item_id in seen_ids:
+                continue
+            seen_ids.add(item_id)
+            matches.append((item_id, title, m.start()))
+        if not matches:
+            continue
+        if matches[0][2] > head_cutoff:
+            logger.debug(
+                "pattern=%s: first match at offset %d > cutoff %d; skipping",
+                name,
+                matches[0][2],
+                head_cutoff,
+            )
+            continue
         if len(matches) > len(best):
             best = matches
             best_name = name
@@ -111,30 +165,86 @@ def _find_boundaries(pages: list[str]) -> list[tuple[str, str, int, int]]:
 
     logger.info("matched %d agenda boundaries using pattern=%s", len(best), best_name)
 
-    # Map character offset → page number.
-    page_offsets: list[int] = []
+    toc_end_page = _infer_toc_end(pages, best)
+    return _assign_body_ranges(pages, best, toc_end_page)
+
+
+def _infer_toc_end(pages: list[str], toc_entries: list[tuple[str, str, int]]) -> int:
+    """Last page that contains TOC entries. Content pages start after."""
+    offsets: list[int] = []
     cumulative = 0
     for page in pages:
-        page_offsets.append(cumulative)
+        offsets.append(cumulative)
         cumulative += len(page) + 1
+    last_page = 1
+    for _, _, off in toc_entries:
+        for i, page_off in enumerate(offsets):
+            if off >= page_off:
+                last_page = max(last_page, i + 1)
+    return last_page
 
-    def page_for_offset(offset: int) -> int:
-        page = 1
-        for i, po in enumerate(page_offsets):
-            if offset >= po:
-                page = i + 1
-        return page
+
+def _assign_body_ranges(
+    pages: list[str],
+    toc_entries: list[tuple[str, str, int]],
+    toc_end_page: int,
+) -> list[tuple[str, str, int, int]]:
+    """For each TOC item, locate where its body content begins in pages after
+    the TOC and return page ranges that span to the next item's body start.
+
+    When an item's body can't be located (line-wrapped titles, missing body,
+    etc.) the item is placed sequentially between the previous and next
+    located items so nothing collapses back to page 1."""
+    body_search_start = toc_end_page + 1
+    body_starts: list[int | None] = [
+        _find_body_start(pages, title, from_page=body_search_start)
+        for _, title, _ in toc_entries
+    ]
+
+    # Fill gaps: if item i has no body start, interpolate between the nearest
+    # neighbor matches on either side.
+    resolved = list(body_starts)
+    for i, start in enumerate(resolved):
+        if start is not None:
+            continue
+        prev = next((resolved[j] for j in range(i - 1, -1, -1) if resolved[j] is not None), None)
+        nxt = next((resolved[j] for j in range(i + 1, len(resolved)) if resolved[j] is not None), None)
+        if prev is not None and nxt is not None:
+            resolved[i] = min(prev + 1, nxt)
+        elif prev is not None:
+            resolved[i] = min(prev + 1, len(pages))
+        elif nxt is not None:
+            resolved[i] = max(nxt - 1, body_search_start)
+        else:
+            # Nothing located at all — fall back to the body start.
+            resolved[i] = body_search_start
 
     boundaries: list[tuple[str, str, int, int]] = []
-    for i, (item_id, title, offset) in enumerate(best):
-        start_page = page_for_offset(offset)
-        if i + 1 < len(best):
-            next_offset = best[i + 1][2]
-            end_page = max(start_page, page_for_offset(next_offset - 1))
+    for i, (item_id, title, _offset) in enumerate(toc_entries):
+        start = resolved[i]
+        assert start is not None
+        if i + 1 < len(toc_entries):
+            nxt_start = resolved[i + 1] or len(pages)
+            end = max(start, nxt_start - 1)
         else:
-            end_page = len(pages)
-        boundaries.append((item_id, title, start_page, end_page))
+            end = len(pages)
+        boundaries.append((item_id, title, start, end))
     return boundaries
+
+
+def _find_body_start(pages: list[str], title: str, *, from_page: int) -> int | None:
+    """Return the 1-indexed page where the given title first appears starting
+    at from_page. Match is case-insensitive and tolerant of layout whitespace."""
+    # Titles often have a mid-word split due to line wraps; normalise both
+    # sides by collapsing runs of whitespace.
+    norm_title = re.sub(r"\s+", " ", title).strip().lower()
+    if len(norm_title) < _MIN_TITLE_CHARS:
+        return None
+    for idx in range(max(from_page - 1, 0), len(pages)):
+        norm_page = re.sub(r"\s+", " ", pages[idx]).lower()
+        if norm_title in norm_page:
+            return idx + 1
+    return None
 
 
 def _slice_pages(pages: list[str], start: int, end: int) -> str:
