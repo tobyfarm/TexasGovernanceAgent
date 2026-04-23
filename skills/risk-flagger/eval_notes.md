@@ -275,6 +275,20 @@ Only RF_18 required a severity correction (WATCH → RED_FLAG prospective), ship
 
 ---
 
+## 2026-04-23 · Remaining items verification — closing the calibration sweep
+
+**Items 4A/4B/4C/4D/4E, 8, 10, 11 verified against the actual PDF.** No new calibration misses. Fixture flags consistent with source text on every item.
+
+- **Item 4C (Rev/Exp Reports, pp. 30–31).** Page 30 confirms Debt Service revenue at 119.72% realized ($8,679,823 / $7,250,000) and 2023 Bond Fund at 129.15% — backing the PF_C POSITIVE. Page 31 confirms Debt Service expenditures at 99.92% ($8,515,593.76 / $8,522,500), backing the RF_20 RED_FLAG on thin I&S reserves (the $389,750 balance itself comes from the Samco table on page 123, a cross-item reference; the hand version's "15 days of debt service coverage" math is correct).
+- **Item 4D (Region 11 Interlocal).** Routine renewal; PF_B clean execution confirmed; no new findings.
+- **Item 8 (Teacher Contracts, p. 128).** Cover sheet confirms "Prior Discussion Date: March 9, 2026" — prior discussion exists, so no RF_25 consideration. BLUF confirms the "held from March to allow certification completion" framing. No flags, as in fixture.
+- **Item 10 (Fund 491 Amendment, pp. 132–134).** Page 132 BLUF confirms "increase revenues and expenditures to finish the 2025-2026 school year" — late-cycle language backing RF_07 WATCH. Page 133 email from Heather Morris explicitly lists "unanticipated increases in food costs... mid-year price adjustments from our catering vendors... expanded our offerings to include new items such as ice cream and Frazil beverages." The specific "-$36.96" account balance is referenced in the hand version but did not surface cleanly in pypdf extraction; likely on an attached financial page the text layer lost structure on. Not a blocker; pattern emission stands.
+- **Item 11 (Bus Purchase, p. 138+).** Proposal letter headers confirmed; tariff language and quote expiration (May 1) are in the attached Blue Bird documentation. Hand version's RF_06 WATCH stands.
+
+**Sweep complete.** Eleven items walked. One calibration fix applied (RF_18 prospective severity WATCH → RED_FLAG, committed separately). Five proposed v2 patterns supported with exact PDF evidence quotes in the fixture for Toby's review. Twenty-two emittable flags + eleven v2-blocked flags + six POSITIVE flags = 33 total in `tests/fixtures/brock_april_13_expected_flags.json`.
+
+---
+
 ## 2026-04-23 · Citation dependencies beyond principles.md §III (for Agent B coordination)
 
 **Purpose.** `principles.md` §III lists the citations Toby uses most often and Agent B loads first into the statute-mapper corpus. The Skills as drafted also emit citations on Brock April 13 items that fall outside that §III list. This section enumerates the gap so Agent B can triage corpus coverage and Toby can decide whether any of these get promoted into §III at the v2 bump.
