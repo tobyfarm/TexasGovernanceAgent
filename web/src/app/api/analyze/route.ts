@@ -36,14 +36,15 @@ export async function POST() {
 }
 
 function streamFixture() {
-  // Canonical hand-written reference pre-read, shared with the rest of the
-  // repo. Keeping a single source of truth — if the reference is edited,
-  // the demo stream picks it up automatically.
+  // Local copy of the canonical hand-written reference pre-read. The
+  // prebuild script (web/scripts/sync-fixture.mjs) copies it from
+  // ../examples/ before each build, so this file is never edited by hand
+  // — but Vercel only deploys web/, so we need it local at runtime.
   const fixturePath = path.join(
     process.cwd(),
-    "..",
-    "examples",
-    "brock_april_13_2026_prereadhand.md",
+    "src",
+    "fixtures",
+    "brock-prereadhand.md",
   );
 
   const encoder = new TextEncoder();
