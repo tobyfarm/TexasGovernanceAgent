@@ -50,6 +50,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SKILLS_DIR = REPO_ROOT / "skills"
 RUNS_DIR = REPO_ROOT / "logs" / "runs"
 DEFAULT_CONCURRENCY = 4
+DEFAULT_RETRY_ATTEMPTS = int(os.getenv("BROCK_RETRY_ATTEMPTS", "2"))
+RETRY_BASE_SECONDS = 0.5
 
 _JSON_SCHEMA_TAIL = """Return *only* a JSON object with this shape:
 {
@@ -191,6 +193,32 @@ async def _invoke_agent(prompt: str, *, cwd: Path, mode: OutputMode = "BROCK_FUL
 _invoke = _invoke_agent
 
 
+async def _invoke_with_retry(
+    prompt: str, *, cwd: Path, mode: OutputMode, attempts: int = DEFAULT_RETRY_ATTEMPTS
+) -> str:
+    """Call the agent with transient-error retries. Parse failures are handled
+    by the caller since they may indicate a structural model issue, not flakiness."""
+    last_exc: Exception | None = None
+    for attempt in range(attempts + 1):
+        try:
+            return await _invoke(prompt, cwd=cwd, mode=mode)
+        except Exception as exc:  # noqa: BLE001 — retry on any SDK-side failure
+            last_exc = exc
+            if attempt >= attempts:
+                break
+            delay = RETRY_BASE_SECONDS * (2**attempt)
+            logger.warning(
+                "agent invocation failed (attempt %d/%d): %s — retrying in %.1fs",
+                attempt + 1,
+                attempts + 1,
+                exc,
+                delay,
+            )
+            await asyncio.sleep(delay)
+    assert last_exc is not None
+    raise last_exc
+
+
 async def _run_item(
     item: AgendaItem,
     *,
@@ -199,7 +227,7 @@ async def _run_item(
     source_pdf: str,
     mode: OutputMode = "BROCK_FULL",
 ) -> ItemAnalysis:
-    text = await _invoke(_user_prompt(item), cwd=cwd, mode=mode)
+    text = await _invoke_with_retry(_user_prompt(item), cwd=cwd, mode=mode)
 
     try:
         parsed = _extract_json(text)

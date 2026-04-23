@@ -22,7 +22,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, status
 from sse_starlette.sse import EventSourceResponse
 
-from agent.run import RUNS_DIR, AnalysisError, analyze_pdf_stream
+from agent.audit import _target_path as _citation_log_path
+from agent.run import REPO_ROOT, RUNS_DIR, SKILLS_DIR, AnalysisError, analyze_pdf_stream
 from api.ratelimit import RateLimiter
 
 load_dotenv()
@@ -57,12 +58,23 @@ def _check_rate_limit(request: Request) -> None:
 
 async def _buffer_upload(pdf: UploadFile) -> Path:
     """Stream the upload to a temp file, enforcing the size cap without
-    buffering the whole thing in memory."""
+    buffering the whole thing in memory. Validates the PDF magic bytes on
+    the first chunk."""
     tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)  # noqa: SIM115 — handed off
     total = 0
     chunk_size = 1024 * 1024
+    header_checked = False
     try:
         while chunk := await pdf.read(chunk_size):
+            if not header_checked:
+                if not chunk.startswith(b"%PDF-"):
+                    tmp.close()
+                    Path(tmp.name).unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="upload is not a PDF (missing %PDF- magic bytes)",
+                    )
+                header_checked = True
             total += len(chunk)
             if total > MAX_UPLOAD_BYTES:
                 tmp.close()
@@ -73,6 +85,12 @@ async def _buffer_upload(pdf: UploadFile) -> Path:
                 )
             tmp.write(chunk)
         tmp.close()
+        if total == 0:
+            Path(tmp.name).unlink(missing_ok=True)
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="empty upload",
+            )
         return Path(tmp.name)
     except Exception:
         tmp.close()
@@ -83,6 +101,45 @@ async def _buffer_upload(pdf: UploadFile) -> Path:
 @app.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/health/detailed")
+async def health_detailed() -> dict:
+    """Operator diagnostic: is the agent actually in a position to run?"""
+    api_key_present = bool(os.getenv("ANTHROPIC_API_KEY"))
+
+    claude_skills = REPO_ROOT / ".claude" / "skills"
+    skills_dir_ok = SKILLS_DIR.is_dir()
+    symlink_ok = claude_skills.is_symlink() and claude_skills.resolve() == SKILLS_DIR.resolve()
+
+    skill_files = {}
+    if skills_dir_ok:
+        for sd in sorted(SKILLS_DIR.iterdir()):
+            if sd.is_dir():
+                skill_files[sd.name] = (sd / "SKILL.md").exists()
+
+    runs_ok = True
+    try:
+        RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        runs_ok = False
+
+    citation_log = _citation_log_path()
+
+    healthy = api_key_present and skills_dir_ok and runs_ok
+    return {
+        "status": "ok" if healthy else "degraded",
+        "anthropic_api_key_present": api_key_present,
+        "skills_dir": str(SKILLS_DIR),
+        "skills_dir_ok": skills_dir_ok,
+        "claude_skills_symlink_ok": symlink_ok,
+        "skills": skill_files,
+        "runs_dir": str(RUNS_DIR),
+        "runs_dir_writable": runs_ok,
+        "citation_log_path": str(citation_log),
+        "auth_required": bool(os.getenv("BROCK_API_KEY")),
+        "rate_limit": {"limit": RATE_LIMIT, "window_seconds": RATE_WINDOW},
+    }
 
 
 @app.post("/analyze")
@@ -171,3 +228,34 @@ async def get_run(
     if not result_path.exists():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
     return json.loads(result_path.read_text())
+
+
+@app.get("/runs/{run_id}/citations")
+async def get_run_citations(
+    run_id: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict:
+    """Return the citation audit rows emitted during a run.
+
+    Scans the global citation log for matching run_id. Cheap for hundreds of
+    runs; swap for a per-run file if the global log gets unwieldy.
+    """
+    _require_api_key(x_api_key)
+    if not run_id.isalnum():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="invalid run_id")
+    log_path = _citation_log_path()
+    if not log_path.exists():
+        return {"run_id": run_id, "citations": []}
+    rows = []
+    with log_path.open(encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if row.get("run_id") == run_id:
+                rows.append(row)
+    return {"run_id": run_id, "citations": rows}

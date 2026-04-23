@@ -2,10 +2,16 @@
 
 Owned by Agent A. Changes here ripple to Agents B/C/D/E/F and must be coordinated
 through Toby. See `agents/AGENT_A.md` §"Interface contract".
+
+CLI: `python -m agent.types --schema` prints the AnalysisResult JSON Schema so
+Agent D (web) can generate TypeScript types from it.
 """
 
 from __future__ import annotations
 
+import argparse
+import json
+import sys
 from datetime import datetime
 from typing import Literal
 
@@ -57,3 +63,44 @@ class AnalysisResult(BaseModel):
     items: list[ItemAnalysis] = Field(default_factory=list)
     prep_checklist: list[str] = Field(default_factory=list)
     output_mode: OutputMode = "BROCK_FULL"
+
+
+_EXPORTED_MODELS = {
+    "AgendaItem": AgendaItem,
+    "Flag": Flag,
+    "Citation": Citation,
+    "ItemAnalysis": ItemAnalysis,
+    "AnalysisResult": AnalysisResult,
+}
+
+
+def _main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Export Agent A's pydantic contract as JSON Schema."
+    )
+    parser.add_argument(
+        "--schema",
+        action="store_true",
+        help="Print a combined JSON Schema with all public models.",
+    )
+    parser.add_argument(
+        "--model",
+        choices=sorted(_EXPORTED_MODELS.keys()),
+        default=None,
+        help="Print JSON Schema for a single model.",
+    )
+    args = parser.parse_args(argv)
+
+    if args.model:
+        print(json.dumps(_EXPORTED_MODELS[args.model].model_json_schema(), indent=2))
+        return 0
+    if args.schema:
+        schemas = {name: cls.model_json_schema() for name, cls in _EXPORTED_MODELS.items()}
+        print(json.dumps({"$defs": schemas}, indent=2))
+        return 0
+    parser.print_help()
+    return 1
+
+
+if __name__ == "__main__":
+    sys.exit(_main())
