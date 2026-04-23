@@ -20,6 +20,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 
 from agent.audit import _target_path as _citation_log_path
@@ -30,6 +31,21 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Brock Governance Agent", version="0.1.0")
+
+# CORS: comma-separated origins in BROCK_CORS_ORIGINS, defaulting to
+# localhost dev ports. Set to "*" to allow any origin (not recommended in prod).
+_cors_env = os.getenv("BROCK_CORS_ORIGINS", "http://localhost:3000,http://localhost:8080")
+_allow_origins = (
+    ["*"] if _cors_env.strip() == "*" else [o.strip() for o in _cors_env.split(",") if o.strip()]
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allow_origins,
+    allow_credentials=_cors_env.strip() != "*",
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+    expose_headers=["Content-Type"],
+)
 
 MAX_UPLOAD_BYTES = int(os.getenv("BROCK_MAX_UPLOAD_BYTES", str(50 * 1024 * 1024)))
 RATE_LIMIT = int(os.getenv("BROCK_RATE_LIMIT", "10"))
