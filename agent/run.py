@@ -482,7 +482,10 @@ def _render_markdown(result: AnalysisResult) -> str:
             lines.append("**Governance Questions**")
             lines.append("")
             for i, q in enumerate(a.questions, 1):
-                lines.append(f"{i}. {q}")
+                # Strip any leading "N." or "N)" the model may have prefixed
+                # so we don't emit "1. 1. …".
+                clean = re.sub(r"^\s*\d+\s*[.)]\s*", "", q)
+                lines.append(f"{i}. {clean}")
             lines.append("")
     return "\n".join(lines)
 

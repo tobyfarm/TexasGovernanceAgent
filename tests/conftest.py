@@ -6,9 +6,14 @@ import os
 from pathlib import Path
 
 import pytest
+from dotenv import load_dotenv
 
-from agent import run as run_mod
-from api import server as server_mod
+# Load repo-root .env before any test runs, including the skipif decorators
+# on the live integration tests (which check os.getenv at collection time).
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+from agent import run as run_mod  # noqa: E402 — must come after load_dotenv
+from api import server as server_mod  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
