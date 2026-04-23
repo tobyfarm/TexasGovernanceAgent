@@ -67,16 +67,25 @@ export async function* analyzeBoardBook(
   signal?: AbortSignal,
 ): AsyncGenerator<AnalysisChunk> {
   const endpoint = resolveAnalyzeEndpoint();
+  const demo = isUsingFixture();
 
-  const formData = new FormData();
-  formData.append("file", file);
+  // Demo mode doesn't use the uploaded file — the route just streams the
+  // canonical fixture. Issue a GET so the PDF body doesn't need to travel
+  // through Vercel's 4.5MB serverless-function payload limit.
+  const init: RequestInit = demo
+    ? { method: "GET", headers: { Accept: "text/event-stream" }, signal }
+    : (() => {
+        const formData = new FormData();
+        formData.append("file", file);
+        return {
+          method: "POST",
+          body: formData,
+          headers: { Accept: "text/event-stream" },
+          signal,
+        };
+      })();
 
-  const response = await fetch(endpoint, {
-    method: "POST",
-    body: formData,
-    headers: { Accept: "text/event-stream" },
-    signal,
-  });
+  const response = await fetch(endpoint, init);
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");

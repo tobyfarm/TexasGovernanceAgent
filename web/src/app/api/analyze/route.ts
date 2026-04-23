@@ -24,14 +24,18 @@ const STAGES = [
   "Assembling the pre-read",
 ];
 
-export async function POST(req: Request) {
-  // Just accept and discard the upload in the demo shim.
-  try {
-    await req.formData();
-  } catch {
-    // non-fatal
-  }
+// The demo shim doesn't need the PDF body — it just streams the canonical
+// reference pre-read. Accept GET so the client can skip sending a 10MB
+// form body through Vercel's 4.5MB function limit.
+export async function GET() {
+  return streamFixture();
+}
 
+export async function POST() {
+  return streamFixture();
+}
+
+function streamFixture() {
   // Canonical hand-written reference pre-read, shared with the rest of the
   // repo. Keeping a single source of truth — if the reference is edited,
   // the demo stream picks it up automatically.
