@@ -128,7 +128,9 @@
           "summary": "RADA declined two consecutive years (-13, -1); since M&O funding is ADA-driven, this is direct revenue loss with no buffer.",
           "citations": ["TEC §42", "TEC §11.1511"],
           "blocked_on": "v2",
-          "_note": "Pattern proposed in gaps_for_v2.md item 3 (enrollment decline vs ADA funding)"
+          "_note": "Pattern proposed in gaps_for_v2.md item 3 (enrollment decline vs ADA funding)",
+          "evidence_quote": "2024-2025: 2043 (-13) ... 2025-2026: 2042 (-1)",
+          "location_in_item": "slide 'RADA & Enrollment – As of 4th Six Weeks', page 51"
         },
         {
           "pattern_id": "RF_15",
@@ -142,7 +144,9 @@
           "summary": "$1.18M in HB2 restricted allotments already committed to salary — if the next legislative session modifies HB2, the district has structural salary obligations without matching revenue.",
           "citations": ["TEC §42", "TEC §44.002"],
           "blocked_on": "v2",
-          "_note": "Pattern proposed in gaps_for_v2.md item 1 (state legislative funding dependency)"
+          "_note": "Pattern proposed in gaps_for_v2.md item 1 (state legislative funding dependency)",
+          "evidence_quote": "Teacher Retention Allotment* $1,100,000 / Support Staff Retention Allotment* $80,000 / Total $1,180,000 / *TRA/SSRA – Committed to HB2 Salary Increase",
+          "location_in_item": "slide 'Estimated FY 25-26 Revenue – HB2, SB4, SB23', page 62"
         },
         {
           "pattern_id": "PF_C",
@@ -165,7 +169,9 @@
           "summary": "CFO identifies three key risks (enrollment, legislative uncertainty, fixed-cost growth) without presenting mitigation options.",
           "citations": ["TEC §11.1515"],
           "blocked_on": "v2",
-          "_note": "Secondary gap in gaps_for_v2.md — risks identified without mitigation plan"
+          "_note": "Secondary gap in gaps_for_v2.md — risks identified without mitigation plan",
+          "evidence_quote": "Future Fiscal Considerations / Key Financial Risks: 1. Enrollment flattening/declining — Funded solely on ADA for M&O 2. Legislative Uncertainty 3. Increased Fixed Costs – Unavoidable",
+          "location_in_item": "slide 'Future Fiscal Considerations', page 66"
         }
       ],
       "expected_questions_min": 10,

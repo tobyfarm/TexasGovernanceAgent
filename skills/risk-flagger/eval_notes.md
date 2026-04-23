@@ -261,6 +261,20 @@ Only RF_18 required a severity correction (WATCH → RED_FLAG prospective), ship
 
 ---
 
+## 2026-04-23 · Item 5 (Budget Workshop) verification against actual PDF
+
+**Items 5 verified against the PDF text.** All six fixture flags (RF_23, RF_15, RF_21, PF_C, RF_22, RF_26) are consistent with the extracted slide text. No severity drift, no missed signals, no spurious emissions. Evidence quotes added to the fixture for RF_23, RF_21, and RF_26.
+
+**Key verified evidence quotes from the actual slides:**
+
+- **RF_23 RED_FLAG** (enrollment decline) — Page 51 "RADA & Enrollment" slide shows two consecutive years of RADA decline: `2024-2025: 2043 (-13); 2025-2026: 2042 (-1)`. Direct confirmation.
+- **RF_21 RED_FLAG** (legislative funding dependency) — Page 62 slide lists $1.1M Teacher Retention Allotment and $80K Support Staff Retention Allotment explicitly annotated `*TRA/SSRA – Committed to HB2 Salary Increase`. The commitment language is the district's own, not an outside inference.
+- **RF_26 RED_FLAG** (risks identified without mitigation) — Page 66 slide "Future Fiscal Considerations" lists three risks: `1. Enrollment flattening/declining – Funded solely on ADA for M&O / 2. Legislative Uncertainty / 3. Increased Fixed Costs – Unavoidable`. No mitigation slide follows; the presentation moves to other topics. Matches hand version's observation that "the presentation identifies the problems but does not present solutions."
+- **Page 47 cover sheet** confirms discussion-only item ("Prior Discussion Date: N/A", "Action Item: None – Discussion Only"). No RF_25 fire because this is a known multi-workshop series (April/May/June), not a first-time commitment.
+- **Page 54 "2026-2027 Budget Assumptions"** confirms "0 New Student Growth – 2188 Current Enrollment" and "Higher Estimated T2 Comptroller Certified Taxable Values (Based on PCAD Net Taxable Estimates)" — evidence for the hand version's WATCH on "budget built on preliminary numbers." My fixture does not emit a flag for this because no current pattern tightly captures "decision made on incomplete information"; noted as a secondary gap in gaps_for_v2.md.
+
+---
+
 ## 2026-04-23 · Citation dependencies beyond principles.md §III (for Agent B coordination)
 
 **Purpose.** `principles.md` §III lists the citations Toby uses most often and Agent B loads first into the statute-mapper corpus. The Skills as drafted also emit citations on Brock April 13 items that fall outside that §III list. This section enumerates the gap so Agent B can triage corpus coverage and Toby can decide whether any of these get promoted into §III at the v2 bump.
