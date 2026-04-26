@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Governance Agent · A project by Roy AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cream: #faf9f5;
+    --cream-2: #f3f1e8;
+    --ink: #141413;
+    --ink-soft: #2b2a27;
+    --mute: #6b6860;
+    --line: #d8d4c5;
+    --light-gray: #e8e6dc;
+    --mid-gray: #b0aea5;
+    --orange: #d97757;
+    --orange-deep: #b85f3f;
+    --blue: #6a9bcc;
+    --blue-deep: #3d7bb5;
+    --green: #788c5d;
+    --green-deep: #5c6d45;
+    --paper-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.078 0 0 0 0 0.078 0 0 0 0 0.074 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--cream);
+    background-image: var(--paper-grain);
+    color: var(--ink);
+    font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 1.6;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Typography utilities */
+  .serif { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 40, "WONK" 0; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.85em; letter-spacing: -0.01em; }
+  .display { font-family: "Fraunces", Georgia, serif; font-weight: 380; font-variation-settings: "SOFT" 70, "WONK" 0, "opsz" 144; letter-spacing: -0.025em; line-height: 0.98; }
+
+  /* Shared layout */
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 40px; }
+  .container-narrow { max-width: 860px; margin: 0 auto; padding: 0 40px; }
+
+  /* Nav */
+  nav.top {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(250, 249, 245, 0.82);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border-bottom: 1px solid rgba(20, 20, 19, 0.06);
+  }
+  nav.top .inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  nav.top .brand {
+    display: flex; align-items: baseline; gap: 10px;
+    font-family: "Fraunces", serif;
+    font-weight: 500;
+    font-size: 19px;
+    letter-spacing: -0.015em;
+    font-variation-settings: "SOFT" 40;
+  }
+  nav.top .brand .dot { width: 8px; height: 8px; background: var(--orange); border-radius: 50%; display: inline-block; transform: translateY(-2px); }
+  nav.top .brand .faded { color: var(--mute); font-weight: 400; font-size: 14px; letter-spacing: 0.02em; font-family: "Instrument Sans", sans-serif; text-transform: uppercase; }
+  nav.top ul { list-style: none; display: flex; gap: 32px; }
+  nav.top ul a {
+    text-decoration: none;
+    color: var(--ink-soft);
+    font-size: 14px;
+    letter-spacing: 0.01em;
+    position: relative;
+    transition: color 0.2s;
+  }
+  nav.top ul a:hover { color: var(--orange); }
+  @media (max-width: 800px) {
+    nav.top ul { display: none; }
+  }
+
+  /* Hero */
+  .hero { padding: 180px 0 100px; position: relative; }
+  .hero .eyebrow {
+    display: inline-flex; align-items: center; gap: 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--mute);
+    margin-bottom: 48px;
+  }
+  .hero .eyebrow .tick { width: 28px; height: 1px; background: var(--orange); display: inline-block; }
+  .hero h1 {
+    font-size: clamp(44px, 7vw, 104px);
+    letter-spacing: -0.035em;
+    font-weight: 340;
+    color: var(--ink);
+    max-width: 1100px;
+  }
+  .hero h1 em { font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; color: var(--orange); }
+  .hero .sub {
+    font-family: "Fraunces", serif;
+    font-weight: 300;
+    font-size: clamp(20px, 2vw, 26px);
+    line-height: 1.4;
+    color: var(--ink-soft);
+    max-width: 720px;
+    margin-top: 40px;
+    letter-spacing: -0.01em;
+  }
+  .hero .meta {
+    margin-top: 72px;
+    display: flex;
+    gap: 56px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--mute);
+    letter-spacing: 0.02em;
+  }
+  .hero .meta .label { text-transform: uppercase; font-size: 11px; letter-spacing: 0.15em; margin-bottom: 8px; }
+  .hero .meta .value { font-family: "Fraunces", serif; font-size: 18px; color: var(--ink); font-weight: 400; letter-spacing: -0.01em; }
+
+  /* Section frame */
+  section { padding: 100px 0; position: relative; }
+  section.alt { background: var(--cream-2); }
+  .section-label {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    margin-bottom: 32px;
+  }
+  .section-label .num {
+    font-family: "JetBrains Mono", monospace;
+    color: var(--orange);
+    font-size: 12px;
+  }
+  .section-label .line { height: 1px; background: var(--line); flex: 1; max-width: 80px; }
+  .section-title {
+    font-family: "Fraunces", serif;
+    font-weight: 320;
+    font-size: clamp(32px, 4.8vw, 64px);
+    letter-spacing: -0.025em;
+    line-height: 1.02;
+    color: var(--ink);
+    margin-bottom: 32px;
+    max-width: 900px;
+    font-variation-settings: "SOFT" 60, "opsz" 144;
+  }
+  .section-title em { font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; color: var(--orange); }
+  .section-title .blue-em { font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; color: var(--blue-deep); }
+  .section-lede {
+    font-family: "Fraunces", serif;
+    font-weight: 330;
+    font-size: clamp(20px, 1.8vw, 24px);
+    line-height: 1.45;
+    color: var(--ink-soft);
+    max-width: 720px;
+    letter-spacing: -0.01em;
+    margin-bottom: 48px;
+  }
+  .body-copy { max-width: 700px; color: var(--ink-soft); font-size: 17px; line-height: 1.7; }
+  .body-copy p + p { margin-top: 20px; }
+  .body-copy strong { color: var(--ink); font-weight: 600; }
+
+  /* Pull quote */
+  .pull {
+    font-family: "Fraunces", serif;
+    font-weight: 300;
+    font-size: clamp(28px, 3.2vw, 42px);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+    max-width: 900px;
+    border-left: 2px solid var(--orange);
+    padding-left: 36px;
+    margin: 48px 0;
+    font-variation-settings: "SOFT" 80, "opsz" 144;
+  }
+  .pull em { font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; }
+
+  /* Three up grid */
+  .three-up {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 48px;
+    margin-top: 56px;
+  }
+  .three-up .cell { border-top: 1px solid var(--line); padding-top: 24px; }
+  .three-up .cell .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--orange);
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+  }
+  .three-up .cell h3 {
+    font-family: "Fraunces", serif;
+    font-weight: 380;
+    font-size: 24px;
+    margin-bottom: 12px;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    font-variation-settings: "SOFT" 60;
+  }
+  .three-up .cell p { color: var(--ink-soft); font-size: 15px; line-height: 1.55; }
+  @media (max-width: 900px) { .three-up { grid-template-columns: 1fr; gap: 32px; } }
+
+  /* Two column */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; gap: 40px; } }
+
+  /* Figure caption */
+  figure { margin: 0; }
+  figure.diagram {
+    margin: 40px 0 8px;
+    padding: 40px;
+    background: var(--cream);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+  }
+  section.alt figure.diagram { background: var(--cream); }
+  figure.diagram::before {
+    content: "";
+    position: absolute;
+    top: 12px; left: 12px;
+    width: 6px; height: 6px;
+    background: var(--orange);
+    border-radius: 50%;
+  }
+  figure.diagram svg { width: 100%; height: auto; display: block; }
+  figcaption {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mute);
+    margin-top: 18px;
+  }
+  figcaption .label { color: var(--orange); margin-right: 8px; }
+
+  /* Callout cards */
+  .callouts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 48px; }
+  @media (max-width: 900px) { .callouts { grid-template-columns: 1fr; } }
+  .callout {
+    border: 1px solid var(--line);
+    padding: 28px;
+    background: var(--cream);
+    position: relative;
+  }
+  section.alt .callout { background: var(--cream); }
+  .callout .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+  .callout.blue .tag { color: var(--blue-deep); }
+  .callout.green .tag { color: var(--green-deep); }
+  .callout h4 {
+    font-family: "Fraunces", serif;
+    font-size: 22px;
+    font-weight: 380;
+    line-height: 1.2;
+    margin-bottom: 12px;
+    letter-spacing: -0.015em;
+    font-variation-settings: "SOFT" 50;
+  }
+  .callout p { font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+
+  /* Skills grid */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    margin-top: 48px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+  .skill {
+    background: var(--cream);
+    padding: 40px 36px;
+    position: relative;
+  }
+  section.alt .skill { background: var(--cream); }
+  .skill .filename {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--orange);
+    margin-bottom: 16px;
+    letter-spacing: -0.01em;
+  }
+  .skill h3 {
+    font-family: "Fraunces", serif;
+    font-weight: 380;
+    font-size: 26px;
+    line-height: 1.15;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
+    font-variation-settings: "SOFT" 60;
+  }
+  .skill p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+  .skill .ex {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--ink);
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    line-height: 1.4;
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+  .skill .ex::before { content: "e.g. "; color: var(--mute); font-style: normal; font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px; }
+  @media (max-width: 800px) { .skills-grid { grid-template-columns: 1fr; } }
+
+  /* Quote block */
+  .doc-excerpt {
+    background: var(--cream);
+    border: 1px solid var(--line);
+    padding: 48px 56px;
+    margin-top: 40px;
+    font-family: "Fraunces", serif;
+    position: relative;
+  }
+  section.alt .doc-excerpt { background: var(--cream); }
+  .doc-excerpt::before {
+    content: "APRIL 13, 2026 · BOARD BOOK PREP";
+    position: absolute;
+    top: 16px; right: 20px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--mute);
+  }
+  .doc-excerpt h5 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+  .doc-excerpt h6 {
+    font-family: "Fraunces", serif;
+    font-size: 28px;
+    font-weight: 380;
+    line-height: 1.1;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+    font-variation-settings: "SOFT" 40;
+  }
+  .doc-excerpt .subt { font-size: 14px; color: var(--mute); margin-bottom: 28px; font-family: "Instrument Sans", sans-serif; }
+  .doc-excerpt p { font-size: 16px; line-height: 1.6; color: var(--ink-soft); margin-bottom: 14px; font-family: "Instrument Sans", sans-serif; }
+  .doc-excerpt .flag {
+    display: inline-block;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 2px 8px;
+    margin-right: 8px;
+    border-radius: 2px;
+  }
+  .doc-excerpt .flag.red { background: rgba(217, 119, 87, 0.16); color: var(--orange-deep); }
+  .doc-excerpt .flag.watch { background: rgba(106, 155, 204, 0.16); color: var(--blue-deep); }
+  .doc-excerpt .flag.pos { background: rgba(120, 140, 93, 0.16); color: var(--green-deep); }
+  .doc-excerpt .q {
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink);
+    padding-left: 20px;
+    border-left: 2px solid var(--orange);
+    margin-top: 16px;
+    font-variation-settings: "SOFT" 100;
+  }
+
+  /* Byline in hero */
+  .byline {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 32px;
+    font-family: "Fraunces", serif;
+    font-style: italic;
+    font-size: 17px;
+    color: var(--ink-soft);
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+    letter-spacing: -0.01em;
+  }
+  .byline-rule {
+    width: 40px;
+    height: 1px;
+    background: var(--orange);
+    display: inline-block;
+    flex-shrink: 0;
+  }
+  .byline strong {
+    color: var(--ink);
+    font-weight: 500;
+    font-style: normal;
+  }
+
+  /* Author section */
+  .author-section .author-meta {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 64px;
+    margin-top: 56px;
+  }
+  .author-section .author-meta h3 {
+    font-family: "Fraunces", serif;
+    font-weight: 380;
+    font-size: 22px;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    margin-bottom: 10px;
+    font-variation-settings: "SOFT" 60;
+  }
+  .author-section .author-meta .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+  .author-section .author-meta p {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+  }
+  .author-section .author-meta strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+  .author-section .author-close {
+    font-family: "Fraunces", serif;
+    font-weight: 320;
+    font-size: clamp(22px, 2.2vw, 30px);
+    line-height: 1.32;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-top: 56px;
+    padding-left: 32px;
+    border-left: 2px solid var(--orange);
+    max-width: 900px;
+    font-variation-settings: "SOFT" 80, "opsz" 144;
+  }
+  .author-section .author-close em {
+    font-style: italic;
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+  }
+  @media (max-width: 900px) {
+    .author-section .author-meta { grid-template-columns: 1fr; gap: 32px; }
+  }
+
+  /* Doctrine cards */
+  .doctrine-source {
+    margin-top: 48px;
+    padding: 28px 36px;
+    border: 1px solid var(--line);
+    background: var(--cream);
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 28px;
+    align-items: start;
+  }
+  section.alt .doctrine-source { background: var(--cream); }
+  .doctrine-source .mark {
+    font-family: "Fraunces", serif;
+    font-size: 42px;
+    color: var(--orange);
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+    font-style: italic;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+  .doctrine-source .text {
+    font-family: "Fraunces", serif;
+    font-weight: 360;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    letter-spacing: -0.005em;
+  }
+  .doctrine-source .text strong {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .doctrine-list { margin-top: 48px; }
+  .doctrine-card {
+    border-top: 1px solid var(--line);
+    padding: 52px 0;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .doctrine-card:last-of-type { border-bottom: 1px solid var(--line); }
+  .doctrine-card .meta .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--orange);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .doctrine-card .meta h3 {
+    font-family: "Fraunces", serif;
+    font-weight: 380;
+    font-size: 26px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    margin-bottom: 14px;
+    font-variation-settings: "SOFT" 60;
+  }
+  .doctrine-card .meta .rule {
+    font-family: "Instrument Sans", sans-serif;
+    font-size: 14px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+  .doctrine-card .body { position: relative; }
+  .doctrine-card .quote {
+    font-family: "Fraunces", serif;
+    font-weight: 320;
+    font-style: italic;
+    font-size: clamp(20px, 2.1vw, 28px);
+    line-height: 1.32;
+    letter-spacing: -0.018em;
+    color: var(--ink);
+    font-variation-settings: "SOFT" 100, "WONK" 1;
+    border-left: 2px solid var(--orange);
+    padding-left: 28px;
+  }
+  .doctrine-card .cite {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    color: var(--mute);
+    letter-spacing: 0.06em;
+    margin-top: 22px;
+    padding-left: 30px;
+  }
+  .doctrine-card .cite .stat { color: var(--orange); }
+  @media (max-width: 900px) {
+    .doctrine-card { grid-template-columns: 1fr; gap: 24px; padding: 40px 0; }
+  }
+
+  /* Roadmap table */
+  .roadmap { margin-top: 48px; border-top: 1px solid var(--ink); }
+  .roadmap-row {
+    display: grid;
+    grid-template-columns: 60px 1.5fr 2fr 100px;
+    gap: 32px;
+    padding: 28px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: baseline;
+  }
+  .roadmap-row .r-num { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--mute); }
+  .roadmap-row .r-name {
+    font-family: "Fraunces", serif;
+    font-size: 22px;
+    font-weight: 380;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    font-variation-settings: "SOFT" 60;
+  }
+  .roadmap-row .r-desc { font-size: 15px; color: var(--ink-soft); line-height: 1.5; }
+  .roadmap-row .r-phase {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--mute);
+    text-align: right;
+  }
+  .roadmap-row.mvp .r-phase { color: var(--orange); }
+  .roadmap-row.mvp .r-name::after { content: " ◊"; color: var(--orange); font-family: "Fraunces", serif; }
+  @media (max-width: 800px) {
+    .roadmap-row { grid-template-columns: 40px 1fr; gap: 16px; }
+    .roadmap-row .r-desc, .roadmap-row .r-phase { grid-column: 2; }
+  }
+
+  /* Split panel */
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 56px;
+    border: 1px solid var(--line);
+  }
+  .split .side { padding: 48px; }
+  .split .side.left { border-right: 1px solid var(--line); background: var(--cream); }
+  .split .side.right { background: var(--cream); position: relative; }
+  .split .side .tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 20px;
+    display: inline-block;
+  }
+  .split .left .tag { color: var(--orange); }
+  .split .right .tag { color: var(--blue-deep); }
+  .split .side h3 {
+    font-family: "Fraunces", serif;
+    font-size: 32px;
+    font-weight: 380;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+    font-variation-settings: "SOFT" 50;
+  }
+  .split .side p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; margin-bottom: 16px; }
+  .split .side ul { list-style: none; margin-top: 20px; }
+  .split .side li {
+    font-size: 14px;
+    color: var(--ink-soft);
+    padding: 10px 0;
+    border-top: 1px dashed var(--line);
+    display: flex;
+    gap: 12px;
+  }
+  .split .side li::before {
+    content: "↳";
+    color: var(--orange);
+    font-family: "Fraunces", serif;
+    flex-shrink: 0;
+  }
+  .split .right li::before { color: var(--blue-deep); }
+  @media (max-width: 900px) {
+    .split { grid-template-columns: 1fr; }
+    .split .side.left { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+
+  /* Open source panel */
+  .os-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-top: 48px;
+  }
+  .os-col { padding: 40px 0; }
+  .os-col.open { padding-right: 48px; border-right: 1px solid var(--line); }
+  .os-col.roy { padding-left: 48px; }
+  .os-col .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--mute);
+    margin-bottom: 16px;
+  }
+  .os-col.open .label::before { content: "◊ "; color: var(--orange); }
+  .os-col.roy .label::before { content: "▲ "; color: var(--ink); }
+  .os-col h3 {
+    font-family: "Fraunces", serif;
+    font-size: 28px;
+    font-weight: 380;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+    font-variation-settings: "SOFT" 50;
+  }
+  .os-col p { color: var(--ink-soft); font-size: 15px; line-height: 1.6; }
+  .os-col ul { margin-top: 20px; list-style: none; }
+  .os-col ul li {
+    font-size: 14px;
+    padding: 8px 0;
+    color: var(--ink-soft);
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: -0.005em;
+  }
+  @media (max-width: 800px) {
+    .os-grid { grid-template-columns: 1fr; gap: 32px; }
+    .os-col.open { padding-right: 0; border-right: none; border-bottom: 1px solid var(--line); padding-bottom: 32px; }
+    .os-col.roy { padding-left: 0; padding-top: 32px; }
+  }
+
+  /* Footer */
+  footer {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 80px 0 40px;
+    margin-top: 80px;
+  }
+  footer .container { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; }
+  @media (max-width: 800px) { footer .container { grid-template-columns: 1fr; } }
+  footer h4 {
+    font-family: "Fraunces", serif;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    font-variation-settings: "SOFT" 50;
+    margin-bottom: 16px;
+    max-width: 500px;
+  }
+  footer h4 em { color: var(--orange); font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; }
+  footer p { color: var(--mid-gray); font-size: 14px; max-width: 400px; }
+  footer .col-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--mid-gray);
+    margin-bottom: 16px;
+  }
+  footer ul { list-style: none; }
+  footer ul li { padding: 6px 0; font-size: 14px; color: var(--cream); }
+  footer .legal {
+    max-width: 1240px;
+    margin: 60px auto 0;
+    padding: 24px 40px 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: var(--mid-gray);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  /* Motion */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.9s cubic-bezier(.2,.8,.3,1), transform 0.9s cubic-bezier(.2,.8,.3,1); }
+  .reveal.is-in { opacity: 1; transform: none; }
+
+  /* SVG conventions */
+  .node-box { fill: var(--cream); stroke: var(--ink); stroke-width: 1.2; }
+  .node-box-soft { fill: var(--cream); stroke: var(--mid-gray); stroke-width: 1; }
+  .node-box-orange { fill: rgba(217, 119, 87, 0.08); stroke: var(--orange); stroke-width: 1.4; }
+  .node-box-blue { fill: rgba(106, 155, 204, 0.08); stroke: var(--blue); stroke-width: 1.4; }
+  .node-box-green { fill: rgba(120, 140, 93, 0.08); stroke: var(--green); stroke-width: 1.4; }
+  .node-box-ink { fill: var(--ink); stroke: var(--ink); }
+  .node-label-display { font-family: "Fraunces", serif; font-size: 15px; font-weight: 480; fill: var(--ink); font-variation-settings: "SOFT" 60; }
+  .node-label-display-light { font-family: "Fraunces", serif; font-size: 15px; font-weight: 480; fill: var(--cream); font-variation-settings: "SOFT" 60; }
+  .node-label-mono { font-family: "JetBrains Mono", monospace; font-size: 10px; fill: var(--mute); letter-spacing: 0.08em; text-transform: uppercase; }
+  .node-label-mono-light { font-family: "JetBrains Mono", monospace; font-size: 10px; fill: var(--mid-gray); letter-spacing: 0.08em; text-transform: uppercase; }
+  .node-label-body { font-family: "Instrument Sans", sans-serif; font-size: 12px; fill: var(--ink-soft); }
+  .node-label-body-light { font-family: "Instrument Sans", sans-serif; font-size: 12px; fill: var(--light-gray); }
+  .arrow-main { fill: none; stroke: var(--ink); stroke-width: 1.2; }
+  .arrow-soft { fill: none; stroke: var(--mid-gray); stroke-width: 1; stroke-dasharray: 3 3; }
+  .arrow-orange { fill: none; stroke: var(--orange); stroke-width: 1.4; }
+  .arrow-blue { fill: none; stroke: var(--blue); stroke-width: 1.4; }
+
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="inner">
+    <div class="brand">
+      <span class="dot"></span>
+      <span>Governance Agent</span>
+      <span class="faded">· Roy AI × Claude</span>
+    </div>
+    <ul>
+      <li><a href="#problem">Problem</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#doctrine">Doctrine</a></li>
+      <li><a href="#gemini">Voice layer</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container reveal">
+    <div class="eyebrow">
+      <span class="tick"></span>
+      <span>Anthropic Hackathon · April 2026 · A Governance Agent for Texas Public Schools</span>
+    </div>
+    <h1 class="display">
+      Student outcomes are a function of<br/>
+      <em>governance quality.</em><br/>
+      Governance quality is now automatable.
+    </h1>
+    <p class="sub">
+      An open-source AI agent that turns dense board books into trustee-ready pre-reads,
+      grounded in Texas statute and operator-level governance principles — with a live voice layer that lets
+      any school board member interrogate the document conversationally.
+    </p>
+    <div class="byline">
+      <span class="byline-rule"></span>
+      <span>By <strong>Toby Farmer</strong> — Elected Trustee, Brock ISD · Founder &amp; CEO, Roy AI</span>
+    </div>
+    <div class="meta">
+      <div>
+        <div class="label">Reference deployment</div>
+        <div class="value">Brock ISD · Parker County, Texas</div>
+      </div>
+      <div>
+        <div class="label">Analysis stack</div>
+        <div class="value">Claude Agent SDK · Skills · Code</div>
+      </div>
+      <div>
+        <div class="label">Live Q&amp;A layer</div>
+        <div class="value">Gemini 3.1 Flash Live API</div>
+      </div>
+      <div>
+        <div class="label">Distribution</div>
+        <div class="value">MIT · Self-hostable</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem" class="alt">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">01</span>
+      <span>The problem</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      Texas law gives school boards an <em>exclusive duty</em> to govern student outcomes.
+      Three failure modes get in the way.
+    </h2>
+    <p class="section-lede">
+      Under TEC §11.151(b), trustees hold the exclusive power to govern. Under §11.1511 and §11.1515, they must
+      adopt measurable goals, establish performance targets, and monitor progress. In practice, the artifacts that
+      carry governance — agenda packets, strategic plans, monitoring reports — are produced by humans under
+      pressure, with incomplete context, and the duty gets diluted.
+    </p>
+    <div class="three-up">
+      <div class="cell">
+        <div class="num">MODE 01</div>
+        <h3>Unmeasurable goals</h3>
+        <p>
+          Boards adopt strategic objectives without baselines, targets, dates, guardrails, or named owners.
+          "Every student will grow" is aspiration, not governance. The statute requires measures.
+        </p>
+      </div>
+      <div class="cell">
+        <div class="num">MODE 02</div>
+        <h3>Role drift</h3>
+        <p>
+          Boards are asked to approve execution details — "strategic actions," operational plans, staffing
+          decisions — that belong to administration. Administration, in turn, is asked to set governance cadence.
+          Everybody is doing someone else's job.
+        </p>
+      </div>
+      <div class="cell">
+        <div class="num">MODE 03</div>
+        <h3>Broken feedback loop</h3>
+        <p>
+          A strategic plan is adopted in August. By October the monthly agenda has no visible tie to it. There is
+          no scoreboard, no cadence, no early-warning signal when a guardrail is about to fall. The loop dies quietly.
+        </p>
+      </div>
+    </div>
+    <div class="pull">
+      When governance breaks, student outcomes follow. <em>TEA intervention is the late-stage symptom
+      of a problem that was already visible in the board book six months earlier.</em>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">02</span>
+      <span>The solution</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      A two-stage agent. <em>Claude</em> reads the board book<br/>
+      and writes the analysis. <span class="blue-em">Gemini</span> makes it conversational.
+    </h2>
+    <p class="section-lede">
+      Stage one: the Claude pipeline ingests a board packet, maps every item to statute and to a codified body of
+      governance principles, and produces a trustee-ready pre-read document in the same format an experienced
+      trustee would produce by hand. Stage two: the board member opens that document and launches a live voice
+      session — grounded in the same material, constrained by the same principles — that they can interrogate
+      conversationally on the way to the meeting.
+    </p>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="End-to-end system architecture">
+        <!-- STAGE 1 label -->
+        <text x="40" y="36" class="node-label-mono">Stage 01 — Analysis (offline, ~60s)</text>
+        <line x1="40" y1="44" x2="640" y2="44" stroke="#d8d4c5" stroke-width="1"/>
+
+        <!-- Input -->
+        <g transform="translate(40, 80)">
+          <rect class="node-box-soft" x="0" y="0" width="130" height="90" rx="2"/>
+          <text x="65" y="22" text-anchor="middle" class="node-label-mono">Input</text>
+          <text x="65" y="50" text-anchor="middle" class="node-label-display">Board book</text>
+          <text x="65" y="72" text-anchor="middle" class="node-label-body">PDF · 166 pages</text>
+        </g>
+
+        <!-- Ingestion -->
+        <g transform="translate(220, 80)">
+          <rect class="node-box-soft" x="0" y="0" width="130" height="90" rx="2"/>
+          <text x="65" y="22" text-anchor="middle" class="node-label-mono">Parse</text>
+          <text x="65" y="50" text-anchor="middle" class="node-label-display">Ingestion</text>
+          <text x="65" y="72" text-anchor="middle" class="node-label-body">PDF → items</text>
+        </g>
+
+        <!-- Lead Agent (Claude) -->
+        <g transform="translate(400, 64)">
+          <rect class="node-box-orange" x="0" y="0" width="240" height="122" rx="3"/>
+          <text x="120" y="24" text-anchor="middle" class="node-label-mono" style="fill: #b85f3f;">Claude Agent SDK</text>
+          <text x="120" y="56" text-anchor="middle" class="node-label-display" style="font-size: 20px;">Lead Agent</text>
+          <text x="120" y="82" text-anchor="middle" class="node-label-body" style="font-size: 11.5px;">gather context → analyze</text>
+          <text x="120" y="99" text-anchor="middle" class="node-label-body" style="font-size: 11.5px;">→ verify → assemble</text>
+        </g>
+
+        <!-- Skills feed up into agent -->
+        <g transform="translate(400, 220)">
+          <text x="120" y="0" text-anchor="middle" class="node-label-mono">Loaded skills</text>
+          <!-- Four skill chips -->
+          <g transform="translate(0, 14)">
+            <rect x="0" y="0" width="110" height="32" class="node-box" rx="2"/>
+            <text x="55" y="20" text-anchor="middle" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px;">statute-mapper</text>
+          </g>
+          <g transform="translate(130, 14)">
+            <rect x="0" y="0" width="110" height="32" class="node-box" rx="2"/>
+            <text x="55" y="20" text-anchor="middle" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px;">principles</text>
+          </g>
+          <g transform="translate(0, 52)">
+            <rect x="0" y="0" width="110" height="32" class="node-box" rx="2"/>
+            <text x="55" y="20" text-anchor="middle" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px;">risk-flagger</text>
+          </g>
+          <g transform="translate(130, 52)">
+            <rect x="0" y="0" width="110" height="32" class="node-box" rx="2"/>
+            <text x="55" y="20" text-anchor="middle" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 10.5px;">output-formatter</text>
+          </g>
+        </g>
+
+        <!-- Statute corpus (side) -->
+        <g transform="translate(40, 220)">
+          <rect class="node-box" x="0" y="0" width="310" height="104" rx="2"/>
+          <text x="155" y="22" text-anchor="middle" class="node-label-mono">Grounding corpora (bundled)</text>
+          <g transform="translate(14, 40)">
+            <text x="0" y="0" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">TEC · Ch 11, 44, 45</text>
+            <text x="0" y="20" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">TGC Ch 551 (TOMA)</text>
+            <text x="0" y="40" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">TAC · TEA frameworks</text>
+            <text x="170" y="0" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">MSRB G-17, G-42</text>
+            <text x="170" y="20" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">LSG · ESF</text>
+            <text x="170" y="40" class="node-label-body" style="font-family: 'JetBrains Mono', monospace; font-size: 11px;">District policies</text>
+          </g>
+        </g>
+
+        <!-- Output artifact -->
+        <g transform="translate(700, 80)">
+          <rect class="node-box" x="0" y="0" width="180" height="186" rx="2"/>
+          <text x="90" y="22" text-anchor="middle" class="node-label-mono">Stage 01 output</text>
+          <text x="90" y="54" text-anchor="middle" class="node-label-display" style="font-size: 18px;">Pre-read</text>
+          <line x1="20" y1="68" x2="160" y2="68" stroke="#d8d4c5" stroke-width="1"/>
+          <text x="20" y="92" class="node-label-body" style="font-size: 11.5px;">· Exec summary</text>
+          <text x="20" y="112" class="node-label-body" style="font-size: 11.5px;">· Per-item deep dive</text>
+          <text x="20" y="132" class="node-label-body" style="font-size: 11.5px;">· Verified citations</text>
+          <text x="20" y="152" class="node-label-body" style="font-size: 11.5px;">· Governance questions</text>
+          <text x="20" y="172" class="node-label-body" style="font-size: 11.5px;">· Risk flags</text>
+        </g>
+
+        <!-- STAGE 2 label -->
+        <text x="700" y="36" class="node-label-mono" style="fill: #3d7bb5;">Stage 02 — Live Q&amp;A (realtime)</text>
+        <line x1="700" y1="44" x2="1160" y2="44" stroke="#6a9bcc" stroke-width="1"/>
+
+        <!-- Board member -->
+        <g transform="translate(930, 80)">
+          <rect class="node-box-soft" x="0" y="0" width="130" height="90" rx="2"/>
+          <text x="65" y="22" text-anchor="middle" class="node-label-mono">Trustee</text>
+          <text x="65" y="50" text-anchor="middle" class="node-label-display">Opens doc</text>
+          <text x="65" y="72" text-anchor="middle" class="node-label-body">Taps "Ask"</text>
+        </g>
+
+        <!-- Gemini Live -->
+        <g transform="translate(840, 220)">
+          <rect class="node-box-blue" x="0" y="0" width="320" height="122" rx="3"/>
+          <text x="160" y="24" text-anchor="middle" class="node-label-mono" style="fill: #3d7bb5;">Gemini 3.1 Flash Live</text>
+          <text x="160" y="56" text-anchor="middle" class="node-label-display" style="font-size: 20px;">Voice Q&amp;A Session</text>
+          <text x="160" y="82" text-anchor="middle" class="node-label-body" style="font-size: 11.5px;">WebSocket · bidirectional audio</text>
+          <text x="160" y="99" text-anchor="middle" class="node-label-body" style="font-size: 11.5px;">128k token context · single board book</text>
+        </g>
+
+        <!-- Context window pre-loaded -->
+        <g transform="translate(700, 300)">
+          <rect class="node-box" x="0" y="0" width="120" height="66" rx="2"/>
+          <text x="60" y="22" text-anchor="middle" class="node-label-mono">Pre-loaded</text>
+          <text x="60" y="42" text-anchor="middle" class="node-label-body" style="font-size: 11px;">Board book</text>
+          <text x="60" y="58" text-anchor="middle" class="node-label-body" style="font-size: 11px;">Pre-read · Principles</text>
+        </g>
+
+        <!-- ARROWS Stage 1 -->
+        <path class="arrow-main" d="M 170 125 L 220 125" marker-end="url(#arrow)"/>
+        <path class="arrow-main" d="M 350 125 L 400 125" marker-end="url(#arrow)"/>
+        <path class="arrow-main" d="M 640 125 L 700 125" marker-end="url(#arrow)"/>
+        <path class="arrow-soft" d="M 350 272 L 400 272" marker-end="url(#arrow-s)"/>
+        <path class="arrow-soft" d="M 520 214 L 520 186" marker-end="url(#arrow-s)"/>
+
+        <!-- Stage 1 → Stage 2 handoff -->
+        <path class="arrow-blue" d="M 790 268 L 790 300" marker-end="url(#arrow-b)"/>
+        <path class="arrow-blue" d="M 820 333 L 840 292" marker-end="url(#arrow-b)"/>
+        <path class="arrow-blue" d="M 995 170 L 995 220" marker-end="url(#arrow-b)"/>
+
+        <!-- Output arrows -->
+        <text x="480" y="410" class="node-label-mono">Stage 02 delivery</text>
+        <line x1="480" y1="418" x2="1160" y2="418" stroke="#d8d4c5" stroke-width="1"/>
+
+        <g transform="translate(480, 445)">
+          <rect class="node-box" x="0" y="0" width="160" height="72" rx="2"/>
+          <text x="80" y="22" text-anchor="middle" class="node-label-mono">Input</text>
+          <text x="80" y="48" text-anchor="middle" class="node-label-display" style="font-size: 16px;">Spoken question</text>
+          <text x="80" y="62" text-anchor="middle" class="node-label-body" style="font-size: 10.5px;">"Why is bond item flagged?"</text>
+        </g>
+        <g transform="translate(680, 445)">
+          <rect class="node-box-blue" x="0" y="0" width="200" height="72" rx="2"/>
+          <text x="100" y="22" text-anchor="middle" class="node-label-mono" style="fill: #3d7bb5;">Grounded reasoning</text>
+          <text x="100" y="48" text-anchor="middle" class="node-label-display" style="font-size: 16px;">System prompt guardrail</text>
+          <text x="100" y="62" text-anchor="middle" class="node-label-body" style="font-size: 10.5px;">stay in the document · cite pages</text>
+        </g>
+        <g transform="translate(920, 445)">
+          <rect class="node-box" x="0" y="0" width="180" height="72" rx="2"/>
+          <text x="90" y="22" text-anchor="middle" class="node-label-mono">Output</text>
+          <text x="90" y="48" text-anchor="middle" class="node-label-display" style="font-size: 16px;">Spoken answer</text>
+          <text x="90" y="62" text-anchor="middle" class="node-label-body" style="font-size: 10.5px;">native audio · no latency stack</text>
+        </g>
+
+        <path class="arrow-blue" d="M 640 481 L 680 481" marker-end="url(#arrow-b)"/>
+        <path class="arrow-blue" d="M 880 481 L 920 481" marker-end="url(#arrow-b)"/>
+
+        <!-- Arrow markers -->
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#141413"/>
+          </marker>
+          <marker id="arrow-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#b0aea5"/>
+          </marker>
+          <marker id="arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6a9bcc"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption><span class="label">Figure 01</span> End-to-end system architecture. Claude handles analysis; Gemini Live handles conversation. The generated document is the handoff artifact.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ARCHITECTURE DEEP DIVE — CLAUDE STAGE -->
+<section id="architecture" class="alt">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">03</span>
+      <span>Stage one · the Claude pipeline</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      The analysis layer is a single <em>Claude Agent SDK</em> loop running four domain Skills.
+    </h2>
+    <p class="section-lede">
+      The Claude Agent SDK gives the agent a computer: bash, file I/O, code execution, web search, and the ability
+      to invoke custom Skills. A lead agent parses the board book, walks each agenda item through a deterministic
+      loop — gather context, analyze against statute and principles, verify citations, assemble the pre-read — and
+      writes the output as a structured markdown report.
+    </p>
+
+    <div class="two-col">
+      <div class="body-copy">
+        <p>
+          The non-obvious design choice is <strong>Skills instead of a monolithic system prompt.</strong> Each Skill
+          is a versioned markdown file that lives in the repository. Claude auto-loads the relevant Skill when a
+          task matches its description. That means the governance IP is auditable, forkable, and improvable without
+          redeploying the agent.
+        </p>
+        <p>
+          A trustee in another district who wants to adjust the risk-flagging heuristics for their local board
+          norms edits the Skill file. A state-level reviewer who wants to add citation patterns for a new TEA
+          framework adds them to the statute-mapper Skill. The agent inherits the improvement automatically.
+        </p>
+        <p>
+          This is how the governance agent stays a general tool and not a Brock-only curiosity.
+        </p>
+      </div>
+      <div>
+        <figure class="diagram">
+          <svg viewBox="0 0 560 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The Claude Agent SDK execution loop">
+            <!-- outer ring -->
+            <circle cx="280" cy="220" r="170" fill="none" stroke="#d8d4c5" stroke-width="1" stroke-dasharray="2 4"/>
+
+            <!-- center -->
+            <rect x="220" y="180" width="120" height="80" rx="2" class="node-box-orange"/>
+            <text x="280" y="202" text-anchor="middle" class="node-label-mono" style="fill: #b85f3f;">Lead agent</text>
+            <text x="280" y="230" text-anchor="middle" class="node-label-display" style="font-size: 14px;">Agent SDK</text>
+            <text x="280" y="248" text-anchor="middle" class="node-label-body" style="font-size: 10px;">Opus 4.7</text>
+
+            <!-- gather -->
+            <g transform="translate(200, 30)">
+              <rect x="0" y="0" width="160" height="56" rx="2" class="node-box"/>
+              <text x="80" y="22" text-anchor="middle" class="node-label-mono">Step 01</text>
+              <text x="80" y="42" text-anchor="middle" class="node-label-display" style="font-size: 13px;">Gather context</text>
+            </g>
+            <!-- analyze -->
+            <g transform="translate(420, 180)">
+              <rect x="0" y="0" width="130" height="56" rx="2" class="node-box"/>
+              <text x="65" y="22" text-anchor="middle" class="node-label-mono">Step 02</text>
+              <text x="65" y="42" text-anchor="middle" class="node-label-display" style="font-size: 13px;">Analyze</text>
+            </g>
+            <!-- verify -->
+            <g transform="translate(200, 360)">
+              <rect x="0" y="0" width="160" height="56" rx="2" class="node-box"/>
+              <text x="80" y="22" text-anchor="middle" class="node-label-mono">Step 03</text>
+              <text x="80" y="42" text-anchor="middle" class="node-label-display" style="font-size: 13px;">Verify citations</text>
+            </g>
+            <!-- assemble -->
+            <g transform="translate(10, 180)">
+              <rect x="0" y="0" width="130" height="56" rx="2" class="node-box"/>
+              <text x="65" y="22" text-anchor="middle" class="node-label-mono">Step 04</text>
+              <text x="65" y="42" text-anchor="middle" class="node-label-display" style="font-size: 13px;">Assemble</text>
+            </g>
+
+            <!-- arcs (between steps) -->
+            <path d="M 340 180 Q 410 140 420 200" class="arrow-main" marker-end="url(#a1)"/>
+            <path d="M 485 236 Q 430 320 360 370" class="arrow-main" marker-end="url(#a1)"/>
+            <path d="M 200 370 Q 100 320 60 236" class="arrow-main" marker-end="url(#a1)"/>
+            <path d="M 85 180 Q 130 110 200 86" class="arrow-main" marker-end="url(#a1)"/>
+
+            <defs>
+              <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#141413"/>
+              </marker>
+            </defs>
+          </svg>
+          <figcaption><span class="label">Figure 02</span> The agent's core execution loop, repeated per agenda item.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SKILLS STACK -->
+<section id="skills">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">04</span>
+      <span>The Skills stack</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      Four markdown files carry the entire <em>domain intelligence.</em>
+    </h2>
+    <p class="section-lede">
+      Every piece of governance judgment — the statute citations, the risk patterns, the question-generation style,
+      the output voice — lives in one of these four Skills. They are the open-source contribution. Districts fork the
+      repo, tune the Skills to their local norms, and ship.
+    </p>
+
+    <div class="skills-grid">
+      <div class="skill">
+        <div class="filename">skills/statute-mapper/SKILL.md</div>
+        <h3>Statute mapper</h3>
+        <p>
+          Maps every agenda item, proposed action, and piece of board language to the authorities that govern it:
+          Texas Education Code, Texas Government Code (including TOMA), TAC, TEA frameworks, MSRB rules, and local
+          Board Operating Procedures. Enforces citation verification — no authority appears in output without
+          matching the bundled corpus.
+        </p>
+        <p class="ex">Item K's blanket TOMA citation (551.071 – 551.087) is procedurally valid for agenda posting but the presiding officer must state the specific section before entering closed session (TGC §551.101).</p>
+      </div>
+      <div class="skill">
+        <div class="filename">skills/governance-principles/SKILL.md</div>
+        <h3>Governance principles</h3>
+        <p>
+          The doctrine layer. Encodes the operator-level heuristics that separate good governance from theater.
+          Every proposed objective is checked for a baseline, target, date, cadence, guardrail, and named owner.
+          Every item is scored for role fit — is the board being asked to govern, or to execute?
+        </p>
+        <p class="ex">The Strategic Plan item presents objectives and key strategic actions for adoption but defers measurable outcomes to a later reporting cycle. Flag: goals without measures violate §11.1511(b)(2)–(3).</p>
+      </div>
+      <div class="skill">
+        <div class="filename">skills/risk-flagger/SKILL.md</div>
+        <h3>Risk flagger</h3>
+        <p>
+          The three-tier annotation system — <span style="color: var(--orange-deep); font-weight: 600;">RED FLAG</span>, <span style="color: var(--blue-deep); font-weight: 600;">WATCH</span>, <span style="color: var(--green-deep); font-weight: 600;">POSITIVE</span> — applied consistently across agenda items.
+          Pattern-matches on known failure modes: blanket statutory citations, delegation without oversight,
+          tariff or supply-chain exposure, quote-expiry pressure, pacing misses on scorecards, and more.
+        </p>
+        <p class="ex">Tariff surcharge language in the bus procurement quote exposes the district beyond the TERP grant ceiling. WATCH: confirm vendor cap before 5/1 quote expiration.</p>
+      </div>
+      <div class="skill">
+        <div class="filename">skills/output-formatter/SKILL.md</div>
+        <h3>Output formatter</h3>
+        <p>
+          Assembles the final artifact in one of two modes. The <em>full pre-read</em> mode produces a complete
+          board-book analysis — executive summary table, per-item deep dive, numbered governance questions,
+          meeting-prep checklist. The <em>line-of-questioning</em> mode produces a focused interrogation doc
+          for a single issue, with strategic sequencing notes.
+        </p>
+        <p class="ex">Full pre-read for a regular meeting · or a focused SAMCO-style line-of-questioning for a single contested item.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THE DOCTRINE -->
+<section id="doctrine" class="alt">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">05</span>
+      <span>The doctrine</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      These aren't abstractions. They're the <em>operator doctrine</em> of a sitting trustee.
+    </h2>
+    <p class="section-lede">
+      The governance-principles Skill carries real governance judgment — not a textbook model. Its v1 was extracted
+      from thirty-plus email threads between a Brock ISD trustee and his board, a 166-page board book analysis
+      produced by hand, two years of public-record artifacts, and one trip to the Weatherford Democrat about an
+      agenda item so vague the public couldn't tell what was being decided. Six principles below. Ten more live in
+      the skills file the agent loads at runtime.
+    </p>
+
+    <div class="doctrine-source">
+      <div class="mark">“</div>
+      <div class="text">
+        Each principle below carries a <strong>rule</strong> (what the agent enforces), a <strong>canonical quote</strong>
+        in the trustee's own voice (preserved in agent output), and a <strong>citation</strong> back to the Texas
+        statute or local authority that grounds it.
+      </div>
+    </div>
+
+    <div class="doctrine-list">
+
+      <div class="doctrine-card">
+        <div class="meta">
+          <div class="num">Principle · 01</div>
+          <h3>Policy controls over procedure</h3>
+          <p class="rule">
+            Board-adopted policy is the governing text. Operating procedures, administrative regulations, and
+            third-party guidance cannot narrow or revise policy text adopted in open session.
+          </p>
+        </div>
+        <div class="body">
+          <blockquote class="quote">
+            TASB is not a legal authority. It is a member organization that provides model language and
+            guidance. The controlling authority here is Texas law and Brock ISD's Board-adopted policy.
+          </blockquote>
+          <div class="cite">
+            <span class="stat">TEC §11.151(b)</span> · BE(LOCAL) · January 2026 agenda dispute
+          </div>
+        </div>
+      </div>
+
+      <div class="doctrine-card">
+        <div class="meta">
+          <div class="num">Principle · 02</div>
+          <h3>Transparent deliberation</h3>
+          <p class="rule">
+            Substantive board discussion happens in public session. Pre-clearing questions with the President or
+            Superintendent circumvents public deliberation and is incompatible with TOMA.
+          </p>
+        </div>
+        <div class="body">
+          <blockquote class="quote">
+            Team of 8 does not mean trustees should avoid asking questions during meetings. It means we govern as
+            a unified body once a vote is taken — not that we silence accountability before a vote happens.
+          </blockquote>
+          <div class="cite">
+            <span class="stat">TGC Ch. 551 (TOMA)</span> · February 2026 board question protocol
+          </div>
+        </div>
+      </div>
+
+      <div class="doctrine-card">
+        <div class="meta">
+          <div class="num">Principle · 03</div>
+          <h3>Measurable goals or no goal</h3>
+          <p class="rule">
+            A goal without a baseline, target, date, cadence, guardrail, and named owner is aspiration, not
+            governance. The statute requires measures.
+          </p>
+        </div>
+        <div class="body">
+          <blockquote class="quote">
+            The objective says where we're going. The measure says how we'll know we got there. The Board
+            adopts the objective, key results, guardrails, and review cadence — administration selects and
+            adjusts actions to achieve the numbers.
+          </blockquote>
+          <div class="cite">
+            <span class="stat">TEC §11.1511(b)(2)–(3)</span> · Strategic plan memorandum
+          </div>
+        </div>
+      </div>
+
+      <div class="doctrine-card">
+        <div class="meta">
+          <div class="num">Principle · 04</div>
+          <h3>Specificity on the record</h3>
+          <p class="rule">
+            Agenda items must describe what the Board is being asked to do. Vague titles, blanket statutory
+            citations, and items that obscure material change are governance failures in themselves.
+          </p>
+        </div>
+        <div class="body">
+          <blockquote class="quote">
+            The item listed on the agenda was so vague that the public had no idea what we were going to do,
+            and that sits really unwell with me.
+          </blockquote>
+          <div class="cite">
+            <span class="stat">TGC §551.043</span> · February 2024 public comment policy fight
+          </div>
+        </div>
+      </div>
+
+      <div class="doctrine-card">
+        <div class="meta">
+          <div class="num">Principle · 05</div>
+          <h3>Fiduciary urgency</h3>
+          <p class="rule">
+            Delay is not neutral. Students are making course decisions and life decisions in real time. When the
+            Board can act and chooses to defer, it is accepting the cost of delay on behalf of the students it serves.
+          </p>
+        </div>
+        <div class="body">
+          <blockquote class="quote">
+            This Board has one job: govern in the best interest of students. Delaying even a discussion of AI
+            and graduate readiness — when we can include it and our adopted policy supports trustee agenda
+            access — undercuts the mission we were elected to carry out.
+          </blockquote>
+          <div class="cite">
+            <span class="stat">TEC §11.1515</span> · January 2026 AI-pathway discussion request
+          </div>
+        </div>
+      </div>
+
+      <div class="doctrine-card">
+        <div class="meta">
+          <div class="num">Principle · 06</div>
+          <h3>Board governs, admin executes</h3>
+          <p class="rule">
+            The Board sets objectives, measures, guardrails, cadence, and standards. Administration selects and
+            adjusts actions to achieve the numbers and reports results. Role drift reduces accountability in
+            both directions.
+          </p>
+        </div>
+        <div class="body">
+          <blockquote class="quote">
+            We do not need to approve every strategic action — that's day-to-day execution. Our job is to set
+            the standard, the target, and the review schedule. Administration brings forward the actions
+            they'll use to hit the targets and reports results openly.
+          </blockquote>
+          <div class="cite">
+            <span class="stat">TEC §§11.1512, 11.201(d)</span> · Strategic plan memorandum
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- SAMPLE OUTPUT -->
+<section>
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">06</span>
+      <span>Sample output · Brock ISD</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      The <em>acceptance test</em> is a direct comparison against a hand-written trustee pre-read.
+    </h2>
+    <p class="section-lede">
+      For the Brock ISD April 13, 2026 regular meeting, the trustee produced a 166-page board book analysis by
+      hand. The agent's output is measured against that document — same structure, same citation discipline, same
+      risk-flagging voice. A representative excerpt:
+    </p>
+
+    <div class="doc-excerpt">
+      <h5>Item K · Closed Session (TGC §§551.071 – 551.087)</h5>
+      <h6>Blanket TOMA citation on agenda</h6>
+      <div class="subt">Type · Informational · TOMA compliance review</div>
+      <p>
+        <span class="flag watch">WATCH</span>
+        The blanket citation gives the board maximum flexibility but also means almost any topic could potentially
+        be discussed in closed session. Under TGC §551.101 the presiding officer must announce the specific
+        section(s) on the record before entering closed session — a blanket citation is acceptable for posting but
+        not for the convening announcement.
+      </p>
+      <p>
+        <span class="flag red">RED FLAG</span>
+        TGC §551.074 does not authorize discussing general employment policy, salary schedules, or working
+        conditions. It covers specific individuals by name or position only. If discussion veers into general
+        policy, it belongs in open session.
+      </p>
+      <div class="q">Will the board president state the specific TGC sections — not just the blanket range — before entering closed session, as TGC §551.101 requires?</div>
+      <div class="q">Have affected employees been notified of their right under TGC §551.074(b) to request a public hearing?</div>
+    </div>
+
+    <p class="body-copy" style="margin-top: 40px;">
+      The agent produces output that is indistinguishable in format and discipline from the hand-written version —
+      same executive summary table, same per-item structure, same RED FLAG / WATCH / POSITIVE taxonomy, same
+      citation-verification footer. What's different is that it runs in under a minute on any board book in Texas
+      instead of four hours per meeting, per trustee.
+    </p>
+  </div>
+</section>
+
+<!-- GEMINI LIVE LAYER -->
+<section id="gemini" class="alt">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">07</span>
+      <span>Stage two · the Gemini Live layer</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      A <span class="blue-em">voice companion</span> with a 128k window
+      pre-loaded with exactly one board book.
+    </h2>
+    <p class="section-lede">
+      Once the pre-read document is produced, the board member can launch a live voice session directly from it.
+      Gemini 3.1 Flash Live opens a bidirectional audio WebSocket with a context window pre-populated with the board
+      book, the generated pre-read, and a trimmed excerpt of the governance principles. A narrowly scoped system
+      prompt turns the model into an explanatory agent, constrained to that one document.
+    </p>
+
+    <figure class="diagram">
+      <svg viewBox="0 0 1200 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Gemini Live architecture with guardrailed context">
+        <!-- Trustee -->
+        <g transform="translate(40, 200)">
+          <circle cx="40" cy="40" r="40" class="node-box-soft"/>
+          <text x="40" y="44" text-anchor="middle" class="node-label-display" style="font-size: 14px;">Trustee</text>
+          <text x="40" y="100" text-anchor="middle" class="node-label-mono">Voice input</text>
+        </g>
+
+        <!-- WebSocket pipe (animated-ish illustration) -->
+        <g transform="translate(140, 210)">
+          <line x1="0" y1="20" x2="180" y2="20" stroke="#6a9bcc" stroke-width="1.2" stroke-dasharray="4 4"/>
+          <text x="90" y="8" text-anchor="middle" class="node-label-mono" style="fill: #3d7bb5;">WebSocket</text>
+          <text x="90" y="38" text-anchor="middle" class="node-label-body" style="font-size: 10px;">16kHz PCM · bidirectional</text>
+        </g>
+
+        <!-- Gemini Live core -->
+        <g transform="translate(340, 140)">
+          <rect x="0" y="0" width="320" height="180" rx="3" class="node-box-blue"/>
+          <text x="160" y="28" text-anchor="middle" class="node-label-mono" style="fill: #3d7bb5;">Gemini 3.1 Flash Live</text>
+
+          <!-- Context slots -->
+          <g transform="translate(20, 50)">
+            <rect x="0" y="0" width="280" height="30" rx="2" fill="#fff" stroke="#6a9bcc" stroke-width="1"/>
+            <text x="12" y="20" class="node-label-body" style="font-size: 11.5px; font-family: 'JetBrains Mono', monospace;">▸ board_book.pdf</text>
+            <text x="268" y="20" text-anchor="end" class="node-label-mono" style="font-size: 9px;">~38k tok</text>
+          </g>
+          <g transform="translate(20, 84)">
+            <rect x="0" y="0" width="280" height="30" rx="2" fill="#fff" stroke="#6a9bcc" stroke-width="1"/>
+            <text x="12" y="20" class="node-label-body" style="font-size: 11.5px; font-family: 'JetBrains Mono', monospace;">▸ prereadoutput.md</text>
+            <text x="268" y="20" text-anchor="end" class="node-label-mono" style="font-size: 9px;">~12k tok</text>
+          </g>
+          <g transform="translate(20, 118)">
+            <rect x="0" y="0" width="280" height="30" rx="2" fill="#fff" stroke="#6a9bcc" stroke-width="1"/>
+            <text x="12" y="20" class="node-label-body" style="font-size: 11.5px; font-family: 'JetBrains Mono', monospace;">▸ principlesexcerpt.md</text>
+            <text x="268" y="20" text-anchor="end" class="node-label-mono" style="font-size: 9px;">~4k tok</text>
+          </g>
+          <text x="160" y="168" text-anchor="middle" class="node-label-body" style="font-size: 11px;">Window utilization: ~54k of 128k tokens</text>
+        </g>
+
+        <!-- System prompt guardrail -->
+        <g transform="translate(700, 140)">
+          <rect x="0" y="0" width="260" height="180" rx="3" class="node-box"/>
+          <text x="130" y="28" text-anchor="middle" class="node-label-mono">System prompt</text>
+          <text x="130" y="54" text-anchor="middle" class="node-label-display" style="font-size: 15px;">The guardrail</text>
+          <g transform="translate(16, 72)">
+            <text x="0" y="18" class="node-label-body" style="font-size: 11.5px;">· Answer only from the loaded</text>
+            <text x="0" y="36" class="node-label-body" style="font-size: 11.5px;">  documents; cite page numbers.</text>
+            <text x="0" y="58" class="node-label-body" style="font-size: 11.5px;">· Apply the governance principles</text>
+            <text x="0" y="76" class="node-label-body" style="font-size: 11.5px;">  when interpreting items.</text>
+            <text x="0" y="98" class="node-label-body" style="font-size: 11.5px;">· If a question falls outside</text>
+            <text x="0" y="116" class="node-label-body" style="font-size: 11.5px;">  the document, say so plainly.</text>
+          </g>
+        </g>
+
+        <!-- Trustee output -->
+        <g transform="translate(1010, 200)">
+          <circle cx="40" cy="40" r="40" class="node-box-soft"/>
+          <text x="40" y="44" text-anchor="middle" class="node-label-display" style="font-size: 14px;">Trustee</text>
+          <text x="40" y="100" text-anchor="middle" class="node-label-mono">Spoken reply</text>
+        </g>
+
+        <!-- Arrows -->
+        <path class="arrow-blue" d="M 320 230 L 340 230" marker-end="url(#arrb2)"/>
+        <path class="arrow-blue" d="M 660 230 L 700 230" marker-end="url(#arrb2)"/>
+        <path class="arrow-blue" d="M 960 230 L 1010 230" marker-end="url(#arrb2)"/>
+
+        <!-- Example exchange -->
+        <text x="40" y="396" class="node-label-mono" style="fill: #3d7bb5;">Example exchange</text>
+        <line x1="40" y1="404" x2="1160" y2="404" stroke="#6a9bcc" stroke-width="1"/>
+
+        <g transform="translate(40, 424)">
+          <text x="0" y="0" class="node-label-body" style="font-family: 'Fraunces', serif; font-size: 13px; font-style: italic; fill: #141413;">"What's the biggest risk in tonight's bond refunding item?"</text>
+        </g>
+        <g transform="translate(40, 452)">
+          <text x="0" y="0" class="node-label-body" style="font-family: 'Fraunces', serif; font-size: 13px; fill: #2b2a27;">"It's restructuring, not savings. The pre-read flags a gross cost of up to $5M, extends debt to 2048, and carries $32.2M in hold-harmless. Page 4 of the board book confirms the figures."</text>
+        </g>
+
+        <defs>
+          <marker id="arrb2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#6a9bcc"/>
+          </marker>
+        </defs>
+      </svg>
+      <figcaption><span class="label">Figure 03</span> The Gemini Live session. A tightly scoped context window plus a narrow system prompt produces low-hallucination, document-grounded answers in real time.</figcaption>
+    </figure>
+
+    <div class="callouts">
+      <div class="callout blue">
+        <div class="tag">Why this works</div>
+        <h4>The context is the guardrail.</h4>
+        <p>
+          Most voice AI failure modes come from the model drawing on training-data priors when it should be drawing
+          on the user's material. By pre-loading exactly one board book into a 128k window and instructing the model
+          to stay within it, the behavior collapses to the narrow task: explain <em>this</em> document, apply <em>these</em> principles.
+        </p>
+      </div>
+      <div class="callout blue">
+        <div class="tag">Why native audio</div>
+        <h4>No transcription stack.</h4>
+        <p>
+          Gemini Live uses native audio-to-audio — no STT, no TTS, no intermediate text. That collapses the voice
+          latency that historically made AI voice assistants feel like they were on a conference call. Response
+          feels conversational, not turn-based.
+        </p>
+      </div>
+      <div class="callout blue">
+        <div class="tag">Why the handoff</div>
+        <h4>Claude assembles, Gemini narrates.</h4>
+        <p>
+          The heavy analytical lift — multi-step reasoning, cross-referencing statute, verifying citations —
+          happens in Claude over roughly a minute of processing. The output document then becomes the shared
+          reference both the trustee and Gemini can work from for the rest of the day.
+        </p>
+      </div>
+      <div class="callout blue">
+        <div class="tag">Real-world use</div>
+        <h4>The commute to the meeting.</h4>
+        <p>
+          The trustee drives to the board meeting. They tap "ask" on tonight's pre-read and spend the drive in
+          natural conversation — "walk me through item seven," "what should I ask the superintendent about the
+          scorecard," "read me the closing statement." They arrive briefed.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TWO MODEL HYBRID -->
+<section>
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">08</span>
+      <span>The two-model hybrid · design rationale</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      Each model plays to its <em>strength.</em>
+    </h2>
+    <p class="section-lede">
+      This is not about religious preference for one vendor. It's about matching the task to the model.
+      Claude is the best tool for multi-step analytical reasoning, careful citation work, and document assembly.
+      Gemini Live is the best tool for real-time, low-latency, voice-native conversation. Putting both on the same
+      artifact gives the end user the best of each.
+    </p>
+
+    <div class="split">
+      <div class="side left">
+        <span class="tag">Claude · Stage 01</span>
+        <h3>Analysis</h3>
+        <p>
+          Runs offline in roughly a minute. Produces a polished document that a trustee or conservator would be
+          willing to sign their name to. This is Claude's sweet spot: long-horizon reasoning, tool use, structured
+          output.
+        </p>
+        <ul>
+          <li>Multi-step execution loop via Agent SDK</li>
+          <li>Four auto-loaded Skills with domain knowledge</li>
+          <li>Bundled corpus of Texas statute</li>
+          <li>Citation verification discipline</li>
+          <li>Produces the canonical artifact</li>
+        </ul>
+      </div>
+      <div class="side right">
+        <span class="tag">Gemini · Stage 02</span>
+        <h3>Conversation</h3>
+        <p>
+          Runs live. The context window is narrow — one board book, one pre-read, trimmed principles. Native audio
+          means the conversation feels real. The document is the guardrail.
+        </p>
+        <ul>
+          <li>Bidirectional WebSocket, native audio-to-audio</li>
+          <li>System instruction scopes to the document</li>
+          <li>128k token context pre-loaded at session start</li>
+          <li>Voice activity detection, natural interruption</li>
+          <li>Default session 10 minutes — a full commute</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPEN SOURCE MODEL -->
+<section class="alt">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">09</span>
+      <span>Distribution</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      Free and self-hostable for any district.<br/>
+      Platform infrastructure for those who want <em>more.</em>
+    </h2>
+    <p class="section-lede">
+      The hackathon deliverable is open source under MIT. Any Texas district — any trustee, really — can clone
+      the repository, provide their own model credentials, and run the agent on their board book. The platform
+      infrastructure that makes this run at scale across hundreds of districts lives on Roy OS.
+    </p>
+
+    <div class="os-grid">
+      <div class="os-col open">
+        <div class="label">Open source · MIT</div>
+        <h3>The agent</h3>
+        <p>
+          Everything required to run a governance pre-read on a single board book, bundled in one repository.
+          Districts fork, configure, and go. No Roy AI account required.
+        </p>
+        <ul>
+          <li>▸ skills/statute-mapper</li>
+          <li>▸ skills/governance-principles</li>
+          <li>▸ skills/risk-flagger</li>
+          <li>▸ skills/output-formatter</li>
+          <li>▸ agent/ (SDK loop, ingestion)</li>
+          <li>▸ api/ (HTTP wrapper)</li>
+          <li>▸ web/ (upload UI, Vercel-deployable)</li>
+          <li>▸ voice/ (Gemini Live bridge)</li>
+          <li>▸ examples/ (Brock April 13 as canonical)</li>
+        </ul>
+      </div>
+      <div class="os-col roy">
+        <div class="label">Roy OS · platform</div>
+        <h3>The infrastructure</h3>
+        <p>
+          For districts, service centers, and TEA that want durable memory, cross-district pattern detection,
+          human-in-the-loop workflows at scale, and enterprise-grade policy routing.
+        </p>
+        <ul>
+          <li>▸ Persistent institutional memory</li>
+          <li>▸ Policy engine with trust calibration</li>
+          <li>▸ Cross-district pattern detection</li>
+          <li>▸ Enterprise HITL workflows</li>
+          <li>▸ Conservator-mode toolkit</li>
+          <li>▸ TEA-grade data integrations</li>
+          <li>▸ Managed Agents deployment</li>
+          <li>▸ SOC 2 / district procurement-ready</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">10</span>
+      <span>The agent portfolio</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      Board Book Red Team is the <em>opening move.</em>
+    </h2>
+    <p class="section-lede">
+      The same architecture — Agent SDK loop, four Skills, hybrid Claude-plus-Gemini surface — powers a family of
+      governance agents. The MVP shipping for the hackathon is Red Team. Everything else is the roadmap.
+    </p>
+
+    <div class="roadmap">
+      <div class="roadmap-row mvp">
+        <div class="r-num">01</div>
+        <div class="r-name">Board Book Red Team</div>
+        <div class="r-desc">Pre-meeting analysis of agenda packets. Flags statutory issues, missing metrics, role drift. Generates trustee question bank and meeting-prep checklist.</div>
+        <div class="r-phase">Hackathon MVP</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="r-num">02</div>
+        <div class="r-name">Strategic Plan Architect</div>
+        <div class="r-desc">Produces OKR-structured district strategic plans with baselines, targets, cadence, guardrails, and named owners. Enforces the board-governs-admin-executes separation.</div>
+        <div class="r-phase">v1 · Q2 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="r-num">03</div>
+        <div class="r-name">Policy &amp; Statute Mapper</div>
+        <div class="r-desc">Standalone analysis tool. Point it at any proposed action, policy draft, or board decision, and it returns the full statutory landscape and relevant precedent.</div>
+        <div class="r-phase">v1 · Q2 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="r-num">04</div>
+        <div class="r-name">Lone Star Governance Coach</div>
+        <div class="r-desc">Meeting analytics. Measures the percentage of board time spent on student outcomes, monitoring cadence compliance, and role-drift indicators.</div>
+        <div class="r-phase">v2 · Q3 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="r-num">05</div>
+        <div class="r-name">Outcome Monitor</div>
+        <div class="r-desc">Live tracking of progress against Key Results. Early-warning flags when guardrails are at risk. Transparent, public-facing dashboards for the community.</div>
+        <div class="r-phase">v2 · Q3 2026</div>
+      </div>
+      <div class="roadmap-row">
+        <div class="r-num">06</div>
+        <div class="r-name">Conservator Toolkit</div>
+        <div class="r-desc">BIP drafting, exit-criteria tracking, governance maturity assessment. Co-designed with active TEA conservators.</div>
+        <div class="r-phase">v3 · Q4 2026</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AUTHOR -->
+<section class="alt author-section">
+  <div class="container reveal">
+    <div class="section-label">
+      <span class="num">11</span>
+      <span>The author</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title">
+      Two lineages. <em>One converging</em> on this tool.
+    </h2>
+    <p class="section-lede">
+      The argument on this page — that student outcomes follow governance quality, and that governance is
+      automatable without losing human judgment — rests on a specific lens. Forty years of Texas public education
+      in the family on one side. A decade of shipping AI systems at global scale on the other. They met in 2021.
+    </p>
+
+    <div class="author-meta">
+      <div>
+        <div class="tag">AI lineage</div>
+        <h3>From nine billion to thirty billion daily translations.</h3>
+      </div>
+      <div>
+        <p>
+          As senior product manager for foundational NLP and generative AI at Meta, Toby led <strong>No Language
+          Left Behind</strong> and scaled the company's machine translation system from nine billion to more than
+          thirty billion daily translations across <strong>1.3 billion daily active users</strong>. He owned the
+          severe-incident response for translation errors in production — including a mistranslation of
+          President Xi Jinping's name that reached the front page of the New York Times — and developed the
+          responsible-AI response playbook that followed.
+        </p>
+        <p>
+          He contributed to a United Nations resolution on preserving low-resource languages through machine
+          translation, and spoke on behalf of Meta at UNESCO Paris, the UN in New York, and UNESCO Mexico City
+          during the International Year of Indigenous Languages. He met with the King of Spain to acquire Real
+          Academia Española datasets, and with officials of the Government of Bangladesh to explain how AI
+          moderation scales could serve integrity without compromising user due process.
+        </p>
+        <p>
+          At Meta Reality Labs, he built the first working prototype of a <strong>contextual AI system for AR
+          glasses</strong>: aim the camera at a restaurant, see a friend's Instagram rating overlaid on the lens.
+          At Netflix, he architected a content understanding platform that measured model confidence and routed
+          high-stakes content to human review — informed by markets where a single mistranslation can get a
+          service expelled from a country.
+        </p>
+      </div>
+    </div>
+
+    <div class="author-meta">
+      <div>
+        <div class="tag">Public-education lineage</div>
+        <h3>Four generations. Same county in Texas.</h3>
+      </div>
+      <div>
+        <p>
+          The Farmer family has lived in Calhoun County, Texas since the early 1800s. Toby's parents, grandfather,
+          and great-grandfather were Texas schoolteachers. His great-grandfather served on the school board in
+          Denton Valley, Texas, and took over the family farm during the Great Depression.
+        </p>
+        <p>
+          Toby holds a Juris Doctorate and began his legal career as a <strong>constitutional law clerk</strong>
+          for the San Carlos Sovereign Apache Nation, researching constitutional law and tribal sovereignty. That
+          foundation shows up in the textualism discipline that runs through every email in the doctrine section
+          above — quote the adopted text, cite the controlling authority, reconcile conflicts on the record.
+        </p>
+        <p>
+          In 2021, Toby stood for election as a Trustee of Brock Independent School District. He won. He has
+          served on the Board continuously since, and produces the hand-written board-meeting pre-reads that
+          became the reference output for this tool.
+        </p>
+      </div>
+    </div>
+
+    <div class="author-close">
+      This tool is what happens when those two lineages meet. The analytical discipline comes from shipping AI that
+      billions of people used every day. <em>The governance discipline comes from reading the Texas Education Code out loud in
+      a packed meeting room, on the record, with your kids in the audience.</em>
+    </div>
+  </div>
+</section>
+
+<!-- CLOSING -->
+<section>
+  <div class="container-narrow reveal" style="text-align: left;">
+    <div class="section-label">
+      <span class="num">12</span>
+      <span>Why this matters</span>
+      <span class="line"></span>
+    </div>
+    <h2 class="section-title" style="max-width: 860px;">
+      Governance is the unoptimized layer of public education. <em>Outcomes follow governance quality.</em>
+    </h2>
+    <p class="body-copy" style="max-width: 860px; font-size: 19px;">
+      Texas has roughly twelve hundred public school districts. Each one is governed by an elected board of
+      trustees who, by statute, hold the exclusive duty to govern student outcomes. Most of those boards are run
+      by volunteers with day jobs, working from board packets of a hundred and sixty pages, meeting once a month.
+      They do not lack commitment. They lack leverage.
+    </p>
+    <p class="body-copy" style="max-width: 860px; margin-top: 20px; font-size: 19px;">
+      An AI agent that turns a hundred-and-sixty-page board book into a structured trustee pre-read, in under a
+      minute, grounded in statute and in hard-won governance principles, is that leverage. Open-sourced, it's
+      leverage for every trustee in the state. Delivered with a voice companion that travels with the board
+      member to the meeting, it's leverage where and when they need it.
+    </p>
+    <div class="pull" style="margin-top: 56px;">
+      If a governance agent shipping in a Texas district in April raises the floor of board work by even ten
+      percent, the downstream effect on <em>student outcomes</em> is measurable within a single academic year.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="container">
+    <div>
+      <h4>Built with <em>Claude</em>.<br/>Grounded in Texas statute.<br/>Open to any district.</h4>
+      <p style="margin-top: 24px;">
+        A project by Roy AI, incubated at the Anthropic hackathon, April 2026. Reference deployment at Brock
+        Independent School District. MIT licensed.
+      </p>
+    </div>
+    <div>
+      <div class="col-label">Built on</div>
+      <ul>
+        <li>Claude Agent SDK</li>
+        <li>Custom Agent Skills</li>
+        <li>Claude Code</li>
+        <li>Gemini 3.1 Flash Live</li>
+      </ul>
+    </div>
+    <div>
+      <div class="col-label">Grounding</div>
+      <ul>
+        <li>TEC Ch. 11, 44, 45</li>
+        <li>TGC Ch. 551 (TOMA)</li>
+        <li>MSRB G-17, G-42</li>
+        <li>Lone Star Governance</li>
+      </ul>
+    </div>
+  </div>
+  <div class="legal">
+    <span>© 2026 Roy AI · Bondi AI, Inc.</span>
+    <span>For Texas trustees, by a Texas trustee.</span>
+  </div>
+</footer>
+
+<script>
+  // Staggered reveal on scroll
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); } });
+  }, { threshold: 0.05, rootMargin: "0px 0px -80px 0px" });
+  document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+</script>
+
+</body>
+</html>

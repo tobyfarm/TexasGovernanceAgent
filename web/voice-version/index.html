@@ -12,9 +12,15 @@
 </head>
 <body>
 
+<!-- Tiny Claude wordmark, every screen -->
+<div class="wordmark serif"><em>Claude</em></div>
+
 <!-- ===== #login ===== -->
 <section id="screen-login" class="screen">
   <div class="login-wrap">
+    <div class="video-frame">
+      <div class="video-placeholder mono">Demo video — coming</div>
+    </div>
     <div class="login-bottom">
       <h1 class="display">Texas Governance Agent</h1>
       <p class="serif login-tag">Built for the Opus 4.7 hackathon</p>
@@ -89,11 +95,7 @@
         <span>Voice</span>
       </button>
       <div class="voice-status mono" id="voice-status">idle</div>
-      <div class="chat-thread" id="chat-thread"></div>
-      <form class="chat-form" id="chat-form" autocomplete="off">
-        <input type="text" id="chat-input" placeholder="Ask about the document..." />
-        <button type="submit" id="chat-send" class="btn-secondary">Send</button>
-      </form>
+      <div class="thread" id="thread"></div>
       <p class="mute thread-footer" id="thread-footer">Q/A Context: current document</p>
     </aside>
   </div>

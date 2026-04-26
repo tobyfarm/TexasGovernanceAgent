@@ -70,7 +70,13 @@ async def stream_generator(
     async with client.messages.stream(
         model=GENERATOR_MODEL,
         max_tokens=MAX_TOKENS,
-        system=system_prompt,
+        system=[
+            {
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ],
         messages=[{"role": "user", "content": user_msg}],
     ) as stream:
         async for text in stream.text_stream:

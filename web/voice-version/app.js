@@ -113,42 +113,6 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ----- home / chat (Claude Q&A) -----
-  const chatForm = document.getElementById("chat-form");
-  const chatInput = document.getElementById("chat-input");
-  const chatThread = document.getElementById("chat-thread");
-  if (chatForm && chatInput && chatThread) {
-    function appendChatMsg(role, text) {
-      const div = document.createElement("div");
-      div.className = "chat-msg chat-" + role;
-      div.textContent = text;
-      chatThread.appendChild(div);
-      chatThread.scrollTop = chatThread.scrollHeight;
-      return div;
-    }
-    chatForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const msg = chatInput.value.trim();
-      if (!msg) return;
-      if (!window.RUN_ID) { alert("Upload a packet first"); return; }
-      appendChatMsg("user", msg);
-      chatInput.value = "";
-      const placeholder = appendChatMsg("assistant", "thinking…");
-      try {
-        const res = await fetch(`/chat/${window.RUN_ID}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: msg }),
-        });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        placeholder.textContent = data.response || "(no response)";
-      } catch (err) {
-        placeholder.textContent = "error: " + err.message;
-      }
-    });
-  }
-
   // If we land on #home directly with FINAL_MD already set (e.g. dev), render it.
   if ((location.hash.slice(1) || "login") === "home" && window.FINAL_MD) {
     renderDoc(window.FINAL_MD);

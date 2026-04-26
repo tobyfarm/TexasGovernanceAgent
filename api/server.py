@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, WebSocket
+from fastapi import FastAPI, File, HTTPException, UploadFile, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 import websockets
@@ -54,6 +54,31 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/runs/{run_id}.docx")
+async def download_docx(run_id: str):
+    """Return the pre-read rendered as a Word document."""
+    from agent.exporter import markdown_to_docx
+
+    safe = "".join(c for c in run_id if c.isalnum())
+    md_path = RUNS_DIR / f"{safe}.md"
+    if not md_path.exists():
+        raise HTTPException(status_code=404, detail="run not found")
+    md = md_path.read_text()
+    docx_bytes = markdown_to_docx(md, title=f"Board Pre-Read \u00b7 {safe}")
+    return Response(
+        content=docx_bytes,
+        media_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "wordprocessingml.document"
+        ),
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="board_prep_{safe}.docx"'
+            )
+        },
+    )
+
+
 @app.get("/runs/{run_id}")
 async def get_run(run_id: str):
     """Return a previously-generated pre-read."""
@@ -62,6 +87,38 @@ async def get_run(run_id: str):
     if not path.exists():
         return JSONResponse({"error": "run not found"}, status_code=404)
     return FileResponse(path, media_type="text/markdown")
+
+
+@app.post("/chat/{run_id}")
+async def chat(run_id: str, body: dict):
+    """Q&A chat: Claude answers questions grounded in the pre-read."""
+    from anthropic import AsyncAnthropic
+
+    safe = "".join(c for c in run_id if c.isalnum())
+    md_path = RUNS_DIR / f"{safe}.md"
+    if not md_path.exists():
+        raise HTTPException(status_code=404, detail="run not found")
+    pre_read = md_path.read_text()
+    user_msg = (body or {}).get("message", "").strip()
+    if not user_msg:
+        raise HTTPException(status_code=400, detail="empty message")
+
+    client = AsyncAnthropic()
+    sys_prompt = (
+        "You are a board-meeting Q&A companion for a Texas school-district trustee. "
+        "Answer the question using only the pre-read below. Be concise (under 120 words). "
+        "Quote statute verbatim when cited. Number arguments. If the answer isn't in the "
+        "pre-read, say so plainly.\n\n"
+        f"<pre_read>\n{pre_read}\n</pre_read>"
+    )
+    msg = await client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=600,
+        system=sys_prompt,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    text = msg.content[0].text if msg.content else ""
+    return {"response": text}
 
 
 @app.post("/analyze")
