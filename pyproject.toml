@@ -1,0 +1,22 @@
+[project]
+name = "texas-governance-agent"
+version = "0.1.0"
+description = "Texas school-board pre-read agent (Brock format)"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "pypdf>=5.0.0",
+    "fastapi[standard]>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.27.0",
+    "sse-starlette>=2.1.0",
+    "pydantic>=2.9.0",
+    "google-genai>=0.3.0",
+    "websockets>=13.0",
+    "python-multipart>=0.0.12",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
