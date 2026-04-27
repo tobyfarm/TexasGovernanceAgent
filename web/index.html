@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Texas Governance Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/style.css" />
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+
+<!-- ===== #login ===== -->
+<section id="screen-login" class="screen">
+  <div class="login-wrap">
+    <div class="login-bottom">
+      <h1 class="display">Texas Governance Agent</h1>
+      <p class="serif login-tag">Built for the Opus 4.7 hackathon</p>
+      <button class="btn-primary" id="btn-try">Try the demo &rarr;</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== #upload ===== -->
+<section id="screen-upload" class="screen">
+  <div class="upload-blur-bg"></div>
+  <div class="upload-card">
+    <h2 class="display upload-title">Upload a board packet PDF</h2>
+    <p class="upload-sub">We'll generate a trustee-ready pre-read in about 90 seconds.</p>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="file-input" accept="application/pdf,.pdf" hidden />
+      <div class="dropzone-inner">
+        <div class="dropzone-icon serif">+</div>
+        <div class="dropzone-msg">Drop a PDF here, or <span class="dropzone-link">click to browse</span></div>
+        <div class="dropzone-hint mono">PDF only · up to ~200 pages</div>
+      </div>
+    </label>
+    <div class="upload-status mono" id="upload-status"></div>
+  </div>
+</section>
+
+<!-- ===== #thinking ===== -->
+<section id="screen-thinking" class="screen">
+  <div class="thinking-wrap">
+    <div class="pills">
+      <div class="pill" data-stage="generator">
+        <span class="pill-dot"></span><span class="pill-label">Generator</span>
+      </div>
+      <div class="pill" data-stage="legal">
+        <span class="pill-dot"></span><span class="pill-label">Legal Verification</span>
+      </div>
+      <div class="pill" data-stage="redteam">
+        <span class="pill-dot"></span><span class="pill-label">Strategic Red-Team</span>
+      </div>
+    </div>
+    <pre class="mono thinking-log" id="thinking-log"></pre>
+    <div class="partial-preview" id="partial-preview">
+      <div class="partial-overlay">Drafting&hellip;</div>
+      <div class="partial-md mono" id="partial-md"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== #home ===== -->
+<section id="screen-home" class="screen">
+  <div class="home-grid">
+    <div class="home-left">
+      <div class="tab-bar">
+        <button class="tab active">Doc / Prep</button>
+        <button class="tab" disabled>Documents</button>
+        <div class="download-buttons">
+          <button id="download-docx-btn" class="btn-secondary" type="button">
+            <span class="btn-icon">&#10515;</span> Download DOCX
+          </button>
+          <button id="print-pdf-btn" class="btn-secondary" type="button">
+            <span class="btn-icon">&#128424;</span> Print / PDF
+          </button>
+        </div>
+      </div>
+      <article class="doc-card" id="doc-card">
+        <div class="doc-empty mono">No document yet — run the demo to populate.</div>
+      </article>
+    </div>
+    <aside class="home-right">
+      <button id="voice-btn" class="btn-voice">
+        <span class="voice-icon">&#127908;</span>
+        <span>Voice</span>
+      </button>
+      <div class="voice-status mono" id="voice-status">idle</div>
+      <div class="chat-thread" id="chat-thread"></div>
+      <form class="chat-form" id="chat-form" autocomplete="off">
+        <input type="text" id="chat-input" placeholder="Ask about the document..." />
+        <button type="submit" id="chat-send" class="btn-secondary">Send</button>
+      </form>
+      <p class="mute thread-footer" id="thread-footer">Q/A Context: current document</p>
+    </aside>
+  </div>
+</section>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

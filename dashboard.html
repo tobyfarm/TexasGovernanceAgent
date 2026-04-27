@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Build Dashboard · Governance Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..900,0..100,0..1;1,9..144,300..900,0..100,0..1&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=JetBrains+Mono:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --cream: #faf9f5;
+    --cream-2: #f3f1e8;
+    --ink: #141413;
+    --ink-soft: #2b2a27;
+    --mute: #6b6860;
+    --line: #d8d4c5;
+    --light-gray: #e8e6dc;
+    --mid-gray: #b0aea5;
+    --orange: #d97757;
+    --orange-deep: #b85f3f;
+    --blue: #6a9bcc;
+    --blue-deep: #3d7bb5;
+    --green: #788c5d;
+    --green-deep: #5c6d45;
+    --red: #c45a4a;
+    --red-soft: rgba(196, 90, 74, 0.12);
+    --orange-soft: rgba(217, 119, 87, 0.16);
+    --blue-soft: rgba(106, 155, 204, 0.16);
+    --green-soft: rgba(120, 140, 93, 0.16);
+    --paper-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='1' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.078 0 0 0 0 0.078 0 0 0 0 0.074 0 0 0 0.04 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--cream);
+    background-image: var(--paper-grain);
+    color: var(--ink);
+    font-family: "Instrument Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 400;
+    font-size: 17px;
+    line-height: 1.6;
+    letter-spacing: -0.005em;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  .serif { font-family: "Fraunces", Georgia, serif; font-variation-settings: "SOFT" 40, "WONK" 0; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 0.85em; letter-spacing: -0.01em; }
+  .display { font-family: "Fraunces", Georgia, serif; font-weight: 380; font-variation-settings: "SOFT" 70, "WONK" 0, "opsz" 144; letter-spacing: -0.025em; line-height: 0.98; }
+
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 40px; }
+
+  /* Nav */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(250, 249, 245, 0.82);
+    backdrop-filter: blur(16px) saturate(120%);
+    border-bottom: 1px solid rgba(20, 20, 19, 0.06);
+    padding: 18px 40px;
+    display: flex; align-items: center; gap: 32px;
+  }
+  nav .logo { font-family: "Fraunces", Georgia, serif; font-weight: 480; font-size: 18px; font-variation-settings: "SOFT" 60; }
+  nav .logo em { color: var(--orange); font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; }
+  nav .meta { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--mute); }
+
+  /* Header */
+  .header { padding: 64px 0 48px; border-bottom: 1px solid var(--line); }
+  .header h1 { font-family: "Fraunces", Georgia, serif; font-size: clamp(32px, 5vw, 56px); font-weight: 340; letter-spacing: -0.035em; font-variation-settings: "SOFT" 70, "WONK" 0, "opsz" 144; line-height: 1.05; margin-bottom: 12px; }
+  .header h1 em { color: var(--orange); font-style: italic; font-variation-settings: "SOFT" 100, "WONK" 1; }
+  .header .sub { font-family: "Fraunces", Georgia, serif; font-size: clamp(18px, 1.6vw, 22px); font-weight: 300; color: var(--ink-soft); }
+
+  /* Stats bar */
+  .stats { display: flex; gap: 48px; padding: 28px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; gap: 2px; }
+  .stat .value { font-family: "Fraunces", Georgia, serif; font-size: 36px; font-weight: 380; font-variation-settings: "SOFT" 60; letter-spacing: -0.02em; }
+  .stat .value.green { color: var(--green-deep); }
+  .stat .value.orange { color: var(--orange); }
+  .stat .value.blue { color: var(--blue-deep); }
+  .stat .label { font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.18em; color: var(--mute); }
+
+  /* Section */
+  .section { padding: 48px 0 0; }
+  .section-label { font-family: "JetBrains Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--mute); margin-bottom: 20px; }
+  .section-title { font-family: "Fraunces", Georgia, serif; font-size: clamp(24px, 3vw, 36px); font-weight: 320; letter-spacing: -0.025em; font-variation-settings: "SOFT" 60; margin-bottom: 24px; }
+
+  /* Agent cards */
+  .agent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 20px; }
+  .agent-card {
+    border: 1px solid var(--line);
+    padding: 28px;
+    background: var(--cream);
+    transition: border-color 0.2s;
+  }
+  .agent-card:hover { border-color: var(--mid-gray); }
+  .agent-card .card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .agent-card .agent-id { font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; padding: 2px 8px; border-radius: 2px; }
+  .agent-card .agent-id.done { background: var(--green-soft); color: var(--green-deep); }
+  .agent-card .agent-id.running { background: var(--blue-soft); color: var(--blue-deep); }
+  .agent-card .agent-id.blocked { background: var(--orange-soft); color: var(--orange-deep); }
+  .agent-card .agent-id.waiting { background: var(--cream-2); color: var(--mute); }
+  .agent-card h3 { font-family: "Fraunces", Georgia, serif; font-size: 22px; font-weight: 380; letter-spacing: -0.015em; font-variation-settings: "SOFT" 60; }
+  .agent-card .desc { font-size: 15px; color: var(--ink-soft); line-height: 1.55; margin-bottom: 12px; }
+  .agent-card .commits { font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--mute); }
+
+  /* Action items */
+  .action-list { display: flex; flex-direction: column; gap: 0; }
+  .action-item {
+    display: grid;
+    grid-template-columns: 40px 1fr 120px;
+    gap: 20px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .action-item:first-child { border-top: 1px solid var(--line); }
+  .action-item .num { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--mute); padding-top: 2px; }
+  .action-item .content h4 { font-family: "Fraunces", Georgia, serif; font-size: 18px; font-weight: 380; font-variation-settings: "SOFT" 50; margin-bottom: 4px; }
+  .action-item .content p { font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+  .action-item .content code { font-family: "JetBrains Mono", monospace; font-size: 13px; background: var(--cream-2); padding: 2px 6px; border-radius: 2px; }
+  .action-item .priority { font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; padding: 3px 10px; border-radius: 2px; text-align: center; white-space: nowrap; }
+  .action-item .priority.critical { background: var(--red-soft); color: var(--red); }
+  .action-item .priority.high { background: var(--orange-soft); color: var(--orange-deep); }
+  .action-item .priority.medium { background: var(--blue-soft); color: var(--blue-deep); }
+  .action-item .priority.low { background: var(--cream-2); color: var(--mute); }
+
+  /* Checkbox */
+  .action-item .check { display: flex; align-items: center; justify-content: center; padding-top: 2px; }
+  .action-item input[type="checkbox"] { appearance: none; width: 20px; height: 20px; border: 1.5px solid var(--line); border-radius: 2px; cursor: pointer; position: relative; background: var(--cream); transition: all 0.15s; }
+  .action-item input[type="checkbox"]:checked { background: var(--green); border-color: var(--green); }
+  .action-item input[type="checkbox"]:checked::after { content: ""; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px; border: solid var(--cream); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .action-item.completed .content h4, .action-item.completed .content p { text-decoration: line-through; color: var(--mute); }
+
+  /* Timeline */
+  .timeline { margin-top: 8px; }
+  .timeline-row {
+    display: grid;
+    grid-template-columns: 100px 1fr 140px;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--line);
+    align-items: start;
+  }
+  .timeline-row:first-child { border-top: 1px solid var(--line); }
+  .timeline-row .day { font-family: "JetBrains Mono", monospace; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--mute); padding-top: 3px; }
+  .timeline-row .day.today { color: var(--orange); font-weight: 700; }
+  .timeline-row .target { font-size: 15px; color: var(--ink-soft); line-height: 1.55; }
+  .timeline-row .target strong { color: var(--ink); }
+  .timeline-row .status { font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; padding: 3px 10px; border-radius: 2px; text-align: center; }
+  .timeline-row .status.ahead { background: var(--green-soft); color: var(--green-deep); }
+  .timeline-row .status.on-track { background: var(--blue-soft); color: var(--blue-deep); }
+  .timeline-row .status.at-risk { background: var(--orange-soft); color: var(--orange-deep); }
+  .timeline-row .status.upcoming { background: var(--cream-2); color: var(--mute); }
+
+  /* Quality metrics */
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  .metric-card { border: 1px solid var(--line); padding: 24px; background: var(--cream); }
+  .metric-card .metric-label { font-family: "JetBrains Mono", monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em; color: var(--mute); margin-bottom: 8px; }
+  .metric-card .metric-value { font-family: "Fraunces", Georgia, serif; font-size: 28px; font-weight: 380; font-variation-settings: "SOFT" 60; margin-bottom: 4px; }
+  .metric-card .metric-detail { font-size: 14px; color: var(--mute); }
+  .metric-card .bar { height: 4px; background: var(--light-gray); margin-top: 12px; border-radius: 2px; overflow: hidden; }
+  .metric-card .bar .fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .metric-card .bar .fill.green { background: var(--green); }
+  .metric-card .bar .fill.orange { background: var(--orange); }
+  .metric-card .bar .fill.blue { background: var(--blue); }
+
+  /* Footer */
+  footer { margin-top: 80px; padding: 40px 0; border-top: 1px solid var(--line); }
+  footer p { font-family: "JetBrains Mono", monospace; font-size: 11px; color: var(--mute); letter-spacing: 0.05em; }
+
+  @media (max-width: 768px) {
+    .container { padding: 0 20px; }
+    nav { padding: 14px 20px; }
+    .stats { gap: 24px; }
+    .agent-grid { grid-template-columns: 1fr; }
+    .action-item { grid-template-columns: 32px 1fr; }
+    .action-item .priority { grid-column: 2; }
+    .timeline-row { grid-template-columns: 80px 1fr; }
+    .timeline-row .status { grid-column: 2; justify-self: start; }
+  }
+</style>
+<script>
+  // Persist checkbox state in localStorage
+  function initChecks() {
+    document.querySelectorAll('.action-item input[type="checkbox"]').forEach((cb, i) => {
+      const key = 'action-' + i;
+      cb.checked = localStorage.getItem(key) === 'true';
+      updateItem(cb);
+      cb.addEventListener('change', () => {
+        localStorage.setItem(key, cb.checked);
+        updateItem(cb);
+        updateStats();
+      });
+    });
+    updateStats();
+  }
+  function updateItem(cb) {
+    cb.closest('.action-item').classList.toggle('completed', cb.checked);
+  }
+  function updateStats() {
+    const all = document.querySelectorAll('.action-item input[type="checkbox"]');
+    const done = document.querySelectorAll('.action-item input[type="checkbox"]:checked');
+    document.getElementById('stat-done').textContent = done.length;
+    document.getElementById('stat-open').textContent = all.length - done.length;
+    document.getElementById('stat-total').textContent = all.length;
+  }
+  document.addEventListener('DOMContentLoaded', initChecks);
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="logo serif">Governance Agent <em>Build Dashboard</em></div>
+  <span class="meta">Demo: Tue Apr 29, 8 AM CT</span>
+</nav>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1 class="display">Build <em>Dashboard</em></h1>
+    <p class="sub serif">Track open items, agent status, and the path to demo day.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <span class="value green" id="stat-done">0</span>
+      <span class="label">Completed</span>
+    </div>
+    <div class="stat">
+      <span class="value orange" id="stat-open">0</span>
+      <span class="label">Open items</span>
+    </div>
+    <div class="stat">
+      <span class="value blue" id="stat-total">0</span>
+      <span class="label">Total tasks</span>
+    </div>
+    <div class="stat">
+      <span class="value">6</span>
+      <span class="label">Days to demo</span>
+    </div>
+  </div>
+
+  <!-- Agent Status -->
+  <div class="section">
+    <p class="section-label">Agent Status</p>
+    <div class="agent-grid">
+
+      <div class="agent-card">
+        <div class="card-head">
+          <span class="agent-id waiting">Waiting</span>
+          <h3 class="serif">Agent A</h3>
+        </div>
+        <p class="desc">Ingestion + Claude Agent SDK loop + FastAPI. Pipeline works end-to-end. Holding for B/C/F calibration before next smoke test.</p>
+        <p class="commits">20 commits on feature/agent-a &middot; 50 tests passing</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="card-head">
+          <span class="agent-id done">Done</span>
+          <h3 class="serif">Agent B</h3>
+        </div>
+        <p class="desc">Statute mapper + corpus. 64 headings scaffolded, verifier built. Needs verbatim text paste and additional statute coverage.</p>
+        <p class="commits">2 commits on feature/agent-b &middot; 19 tests passing</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="card-head">
+          <span class="agent-id blocked">Blocked</span>
+          <h3 class="serif">Agent C</h3>
+        </div>
+        <p class="desc">Risk flagger + governance principles. Calibration sweep done. Flags 3-5x too sensitive vs hand version. Needs your v2 doctrine review.</p>
+        <p class="commits">6 commits on feature/agent-c &middot; calibration: 51/104/45 vs target 14/20/7</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="card-head">
+          <span class="agent-id done">Done</span>
+          <h3 class="serif">Agent D</h3>
+        </div>
+        <p class="desc">Next.js web site on Vercel. QA passed. Needs prod promote for upload fix and voice integration with Agent E.</p>
+        <p class="commits">pushed to feature/agent-d &middot; live at governance-agent.vercel.app</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="card-head">
+          <span class="agent-id done">Done</span>
+          <h3 class="serif">Agent E</h3>
+        </div>
+        <p class="desc">Gemini 3.1 Flash Live voice bridge. End-to-end working with 1.3-1.9s latency. 5/5 Brock eval questions grounded.</p>
+        <p class="commits">8 commits on feature/agent-e &middot; 9 tests passing</p>
+      </div>
+
+      <div class="agent-card">
+        <div class="card-head">
+          <span class="agent-id running">Running</span>
+          <h3 class="serif">Agent F</h3>
+        </div>
+        <p class="desc">Output formatter. Brock + SAMCO templates shipped. Integrating with Agent A types. Output 2.6x too long, needs compression.</p>
+        <p class="commits">pushed to feature/agent-f &middot; 17 tests passing</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Your Action Items -->
+  <div class="section">
+    <p class="section-label">Your Action Items</p>
+    <h2 class="section-title serif">What Toby needs to do</h2>
+
+    <div class="action-list">
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Promote Vercel to production</h4>
+          <p>Run <code>cd ~/code/worktrees/agent-d/web && pnpm dlx vercel deploy --prod --yes</code> to fix the upload body-limit bug on the live site.</p>
+        </div>
+        <span class="priority high">High</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Review gaps_for_v2.md</h4>
+          <p>Agent C found 11 flags needing doctrine updates. Read <code>~/code/worktrees/agent-c/skills/governance-principles/gaps_for_v2.md</code> and decide which RF_21-RF_27 patterns to accept. This unblocks 11 hand-version flags.</p>
+        </div>
+        <span class="priority critical">Critical</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Paste verbatim statute text into corpus</h4>
+          <p>Agent B scaffolded 64 headings with TODO markers. Open each file in <code>skills/statute-mapper/statutes/</code> and paste text from statutes.capitol.texas.gov. Run <code>python3 skills/statute-mapper/verifier.py --list</code> to check coverage.</p>
+        </div>
+        <span class="priority high">High</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Set API keys in .env</h4>
+          <p>Both ANTHROPIC_API_KEY and GOOGLE_API_KEY need to be in <code>~/code/TexasGovernanceAgent/.env</code>. Symlink to worktrees as needed.</p>
+        </div>
+        <span class="priority critical">Critical</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Merge feature branches into main</h4>
+          <p>Merge order: B first, then C, F, A, D, E. Resolve conflicts. Push. Then redistribute to worktrees.</p>
+        </div>
+        <span class="priority high">High</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Re-run Agent A live smoke after calibration</h4>
+          <p>Once C reduces flags and F compresses output, wake Agent A to rerun the Brock pipeline and measure improvement against hand version.</p>
+        </div>
+        <span class="priority medium">Medium</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Set NEXT_PUBLIC_API_URL in Vercel</h4>
+          <p>Once Agent A's backend is deployed, set the env var in the Vercel dashboard so the site connects to the real API instead of demo mode.</p>
+        </div>
+        <span class="priority medium">Medium</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Wire voice bridge into web UI</h4>
+          <p>Agent D needs to integrate Agent E's WebSocket state machine. README in <code>voice/README.md</code> has the copy-paste integration guide.</p>
+        </div>
+        <span class="priority medium">Medium</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Day 3 eval: side-by-side comparison</h4>
+          <p>Sit down with the generated pre-read and hand version. Log every delta. Classify as principle gap, skill miscalibration, corpus gap, formatter issue, or pipeline issue.</p>
+        </div>
+        <span class="priority high">High</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Rotate API keys</h4>
+          <p>Both your Anthropic and Google API keys were shared in chat. Rotate them in the respective consoles and update .env.</p>
+        </div>
+        <span class="priority critical">Critical</span>
+      </div>
+
+      <div class="action-item">
+        <div class="check"><input type="checkbox" /></div>
+        <div class="content">
+          <h4 class="serif">Prepare demo script</h4>
+          <p>3-minute demo: 30s upload + live stream, 90s scroll to RED FLAG + voice question, 60s show principles.md as moat. Practice dry run.</p>
+        </div>
+        <span class="priority medium">Medium</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Quality Metrics from Agent A's Live Run -->
+  <div class="section">
+    <p class="section-label">Quality Metrics</p>
+    <h2 class="section-title serif">Last live pipeline run</h2>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <p class="metric-label">Length ratio</p>
+        <p class="metric-value" style="color: var(--orange);">2.63x</p>
+        <p class="metric-detail">Agent output vs hand version (target: 1.0x)</p>
+        <div class="bar"><div class="fill orange" style="width: 100%;"></div></div>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Flag accuracy</p>
+        <p class="metric-value" style="color: var(--orange);">51 / 104 / 45</p>
+        <p class="metric-detail">RED / WATCH / POSITIVE vs hand: 14 / 20 / 7</p>
+        <div class="bar"><div class="fill orange" style="width: 30%;"></div></div>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Citations matched</p>
+        <p class="metric-value" style="color: var(--blue-deep);">71%</p>
+        <p class="metric-detail">29 hand-only citations remaining (from 38)</p>
+        <div class="bar"><div class="fill blue" style="width: 71%;"></div></div>
+      </div>
+      <div class="metric-card">
+        <p class="metric-label">Agenda items parsed</p>
+        <p class="metric-value" style="color: var(--green-deep);">13 / 13</p>
+        <p class="metric-detail">Items A-M matching published agenda</p>
+        <div class="bar"><div class="fill green" style="width: 100%;"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="section">
+    <p class="section-label">Timeline</p>
+    <h2 class="section-title serif">Six-day build plan</h2>
+
+    <div class="timeline">
+      <div class="timeline-row">
+        <span class="day today">Day 1 Wed</span>
+        <p class="target"><strong>All six agents scaffolded.</strong> Agent A produces rough end-to-end run on Brock PDF.</p>
+        <span class="status ahead">Ahead</span>
+      </div>
+      <div class="timeline-row">
+        <span class="day today">Day 2 Thu</span>
+        <p class="target"><strong>Skills populated.</strong> Output formatter emits recognizable Brock format. First real pre-read.</p>
+        <span class="status ahead">Ahead</span>
+      </div>
+      <div class="timeline-row">
+        <span class="day">Day 3 Fri</span>
+        <p class="target"><strong>Eval day.</strong> Side-by-side vs hand version. Iterate Skills. Calibrate flags and compression.</p>
+        <span class="status on-track">On track</span>
+      </div>
+      <div class="timeline-row">
+        <span class="day">Day 4 Sat</span>
+        <p class="target"><strong>SAMCO LOQ mode.</strong> Second eval on different board book. Voice integration end-to-end.</p>
+        <span class="status upcoming">Upcoming</span>
+      </div>
+      <div class="timeline-row">
+        <span class="day">Day 5 Sun</span>
+        <p class="target"><strong>Site live on Vercel.</strong> README polished. Repo review. Third eval from cold reader.</p>
+        <span class="status upcoming">Upcoming</span>
+      </div>
+      <div class="timeline-row">
+        <span class="day">Day 6 Mon</span>
+        <p class="target"><strong>Demo script.</strong> Dry runs. Buffer.</p>
+        <span class="status upcoming">Upcoming</span>
+      </div>
+      <div class="timeline-row">
+        <span class="day" style="color: var(--orange); font-weight: 700;">Demo Tue</span>
+        <p class="target"><strong>8 AM CT.</strong> Upload PDF, stream output, show RED FLAG, voice question, show doctrine moat.</p>
+        <span class="status upcoming">Apr 29</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container">
+    <p>Governance Agent Build Dashboard &middot; Updated Apr 23, 2026 &middot; For Texas trustees, by a Texas trustee.</p>
+  </div>
+</footer>
+
+</body>
+</html>
