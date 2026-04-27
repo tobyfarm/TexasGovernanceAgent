@@ -2,7 +2,7 @@
 
 **An open-source AI agent that turns Texas school-board packets into trustee-ready pre-reads.**
 
-Built by [Toby Farmer](https://linkedin.com/tobyfarmer) — elected Trustee, Brock ISD — during the Anthropic hackathon, April 2026. Grounded in Texas statute and in an operator-level governance doctrine authored over four years on the board. MIT licensed. Self-hostable.
+Built by [Toby Farmer](https://www.linkedin.com/in/tobyfarmer/) — elected Trustee, Brock ISD — during the Anthropic hackathon, April 2026. Grounded in Texas statute and in an operator-level governance doctrine authored over four years on the board. MIT licensed. Self-hostable.
 
 ---
 
